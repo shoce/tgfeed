@@ -191,7 +191,7 @@ func FeedsCheck() error {
 
 			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 				ChatId: Config.TgChatId,
-				Text: tg.Underline(
+				Text: tg.Bold(
 					"%s • %s",
 					tg.Esc(feed.Title), tg.Link(e.Updated.Time.UTC().Format("2006 Jan 2 15:04"), e.Link.Href),
 				) + NL +

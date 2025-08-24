@@ -52,6 +52,8 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: tag
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           git config user.name github-actions
           git config user.email "github-actions@users.noreply.github.com"

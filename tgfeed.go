@@ -174,7 +174,14 @@ func FeedsCheck() error {
 			return fmt.Errorf("xml decode %v", err)
 		}
 
+		if feed.Updated.Time.Before(Config.FeedsCheckLast) {
+			continue
+		}
+
 		for _, e := range feed.Entries {
+			if e.Updated.Time.Before(Config.FeedsCheckLast) {
+				continue
+			}
 			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 				ChatId: Config.TgChatId,
 				Text: tg.Underline("%s", feed.Title) + NL +

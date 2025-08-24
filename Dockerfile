@@ -28,5 +28,5 @@ COPY *.text /opt/$APPNAME/
 RUN ls -l -a /opt/$APPNAME/
 COPY --from=build /root/$APPNAME/$APPNAME /bin/$APPNAME
 WORKDIR /opt/$APPNAME/
-ENTRYPOINT ["/bin/$APPNAME"]
+ENTRYPOINT /bin/$APPNAME
 

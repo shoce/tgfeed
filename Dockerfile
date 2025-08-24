@@ -1,5 +1,5 @@
 
-ARG APPNAME=tgfeed
+ENV APPNAME=tgfeed
 
 # https://hub.docker.com/_/golang/tags
 FROM golang:1.25.0 AS build

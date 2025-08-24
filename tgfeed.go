@@ -53,6 +53,8 @@ type TgFeedConfig struct {
 var (
 	Config TgFeedConfig
 
+	TZIST = time.FixedZone("IST", 330*60)
+
 	Ctx context.Context
 
 	HttpClient = &http.Client{}
@@ -191,10 +193,10 @@ func FeedsCheck() error {
 
 			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 				ChatId: Config.TgChatId,
-				Text: tg.Bold(
-					"%s • %s",
-					tg.Esc(feed.Title), tg.Link(e.Updated.Time.UTC().Format("2006 Jan 2 15:04"), e.Link.Href),
-				) + NL +
+				Text: tg.Bold(tg.Link(
+					fmt.Sprintf("%s • %s", feed.Title, e.Updated.Time.In(TZIST).Format("2006 Jan 2 15:04")),
+					e.Link.Href,
+				)) + NL +
 					tg.Esc(e.Title),
 
 				LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},

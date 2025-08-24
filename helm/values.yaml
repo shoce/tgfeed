@@ -1,5 +1,7 @@
 ---
 
+AppName: tgfeed
+
 ImageNameGithubTgFeed: ghcr.io/shoce/tgfeed
 ImageTagGithubTgFeed: ""
 

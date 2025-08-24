@@ -1,15 +1,17 @@
 
+ARG APPNAME=tgfeed
+
 # https://hub.docker.com/_/golang/tags
 FROM golang:1.25.0 AS build
 ENV CGO_ENABLED=0
 WORKDIR /root/
-RUN mkdir -p /root/tgfeed/
-COPY *.go go.mod go.sum /root/tgfeed/
-WORKDIR /root/tgfeed/
+RUN mkdir -p /root/$APPNAME/
+COPY *.go go.mod go.sum /root/$APPNAME/
+WORKDIR /root/$APPNAME/
 RUN go version
 RUN go get -v
 RUN ls -l -a
-RUN go build -o tgfeed .
+RUN go build -o $APPNAME .
 RUN ls -l -a
 
 
@@ -17,10 +19,10 @@ RUN ls -l -a
 FROM alpine:3.22.1
 RUN apk add --no-cache tzdata
 RUN apk add --no-cache gcompat && ln -s -f -v ld-linux-x86-64.so.2 /lib/libresolv.so.2
-RUN mkdir -p /opt/tgfeed/
-COPY *.text /opt/tgfeed/
-RUN ls -l -a /opt/tgfeed/
-COPY --from=build /root/tgfeed/tgfeed /bin/tgfeed
-WORKDIR /opt/tgfeed/
-ENTRYPOINT ["/bin/tgfeed"]
+RUN mkdir -p /opt/$APPNAME/
+COPY *.text /opt/$APPNAME/
+RUN ls -l -a /opt/$APPNAME/
+COPY --from=build /root/$APPNAME/$APPNAME /bin/$APPNAME
+WORKDIR /opt/$APPNAME/
+ENTRYPOINT ["/bin/$APPNAME"]
 

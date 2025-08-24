@@ -3,31 +3,31 @@ apiVersion: apps/v1
 kind: StatefulSet
 
 metadata:
-  name: tgfeed
+  name: {{ $.Values.AppName }}
   namespace: {{ $.Release.Namespace }}
   labels:
-    app: tgfeed
+    app: {{ $.Values.AppName }}
 
 spec:
 
   selector:
     matchLabels:
-      app: tgfeed
+      app: {{ $.Values.AppName }}
 
   template:
     metadata:
-      name: tgfeed
+      name: {{ $.Values.AppName }}
       labels:
-        app: tgfeed
+        app: {{ $.Values.AppName }}
     spec:
 
       containers:
 
-        - name: tgfeed
+        - name: {{ $.Values.AppName }}
           image: "{{ $.Values.ImageNameGithubTgFeed }}:{{ $.Values.ImageTagGithubTgFeed }}"
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
-                name: tgfeed
+                name: {{ $.Values.AppName }}
 
 

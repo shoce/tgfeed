@@ -78,7 +78,7 @@ func init() {
 		log("DEBUG <true>")
 	}
 
-	log("Interval %v", Config.Interval)
+	log("Interval <%v>", Config.Interval)
 	if Config.Interval == 0 {
 		log("ERROR Interval <0>")
 		os.Exit(1)
@@ -96,7 +96,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	log("FeedsCheckLast %v", Config.FeedsCheckLast)
+	log("FeedsCheckLast <%v>", Config.FeedsCheckLast)
 
 	log("FeedsUrls %v", Config.FeedsUrls)
 }
@@ -106,7 +106,7 @@ func main() {
 	signal.Notify(sigterm, syscall.SIGTERM)
 	go func(sigterm chan os.Signal) {
 		<-sigterm
-		tglog("%s: sigterm", os.Args[0])
+		tglog("%s sigterm", os.Args[0])
 		os.Exit(1)
 	}(sigterm)
 
@@ -114,7 +114,7 @@ func main() {
 		t0 := time.Now()
 
 		if err := FeedsCheck(); err != nil {
-			log("ERROR FeedsCheck %v", err)
+			tglog("ERROR FeedsCheck %v", err)
 		}
 
 		if dur := time.Now().Sub(t0); dur < Config.Interval {

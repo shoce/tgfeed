@@ -124,15 +124,15 @@ func main() {
 }
 
 type Feed struct {
-	Title   string  `xml:"title"`
 	Updated Time    `xml:"updated"`
+	Title   string  `xml:"title"`
 	Entries []Entry `xml:"entry"`
 }
 
 type Entry struct {
 	Updated Time   `xml:"updated"`
-	Link    Link   `xml:"link"`
 	Title   string `xml:"title"`
+	Link    Link   `xml:"link"`
 }
 
 type Link struct {
@@ -161,6 +161,7 @@ func FeedsCheck() error {
 		if Config.DEBUG {
 			log("DEBUG feed url %s", feedurl)
 		}
+
 		resp, err := http.Get(feedurl)
 		if err != nil {
 			return fmt.Errorf("http get %v", err)
@@ -180,9 +181,14 @@ func FeedsCheck() error {
 		})
 
 		for _, e := range feed.Entries {
+			if Config.DEBUG {
+				log("DEBUG feed entry [%s] updated <%s>", e.Title, e.Updated.Time)
+			}
+
 			if e.Updated.Time.Before(Config.FeedsCheckLast) {
 				continue
 			}
+
 			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 				ChatId: Config.TgChatId,
 				Text: tg.Underline("%s", feed.Title) + NL +

@@ -175,10 +175,6 @@ func FeedsCheck() error {
 			return fmt.Errorf("xml decode %v", err)
 		}
 
-		if feed.Updated.Time.Before(Config.FeedsCheckLast) {
-			continue
-		}
-
 		sort.Slice(feed.Entries, func(i, j int) bool {
 			return feed.Entries[i].Updated.Time.Before(feed.Entries[j].Updated.Time)
 		})

@@ -41,12 +41,12 @@ type TgFeedConfig struct {
 
 	XmlDefaultSpace string `yaml:"XmlDefaultSpace"` // = "http://www.w3.org/2005/Atom"
 
+	FeedsCheckLast time.Time `yaml:"FeedCheckLast"`
+
 	FeedsUrls []string `yaml:"FeedUrls"`
 	// = https://github.com/golang/go/releases.atom
 	// = https://gitea.com/gitea/helm-actions/atom/branch/main
 	// = https://gitea.com/gitea/helm-actions.atom
-
-	FeedsCheckLast time.Time `yaml:"FeedCheckLast"`
 }
 
 var (
@@ -94,6 +94,10 @@ func init() {
 		log("ERROR TgChatId empty")
 		os.Exit(1)
 	}
+
+	log("FeedsCheckLast %v", Config.FeedsCheckLast)
+
+	log("FeedsUrls %v", Config.FeedsUrls)
 }
 
 func main() {
@@ -158,7 +162,7 @@ func FeedsCheck() error {
 		}
 		resp, err := http.Get(feedurl)
 		if err != nil {
-			log("ERROR http get %v", err)
+			return fmt.Errorf("http get %v", err)
 		}
 		defer resp.Body.Close()
 
@@ -167,7 +171,7 @@ func FeedsCheck() error {
 
 		var feed Feed
 		if err := decoder.Decode(&feed); err != nil {
-			log("ERROR xml decode %v", err)
+			return fmt.Errorf("xml decode %v", err)
 		}
 
 		for _, e := range feed.Entries {
@@ -186,7 +190,7 @@ func FeedsCheck() error {
 
 	Config.FeedsCheckLast = time.Now()
 	if err := Config.Put(); err != nil {
-		return fmt.Errorf("ERROR Config.Put %v", err)
+		return fmt.Errorf("Config.Put %v", err)
 	}
 
 	return nil

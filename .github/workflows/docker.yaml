@@ -1,0 +1,69 @@
+# https://github.com/docker/build-push-action
+# https://docs.github.com/en/actions/learn-github-actions/contexts
+
+name: docker
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'helm/**'
+      - '.github/workflows/helm.yaml'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: shoce/action-version@v1
+
+      - uses: shoce/action-checkout@v1
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.VERSION }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: tag
+        run: |
+          git config user.name github-actions
+          git config user.email "github-actions@users.noreply.github.com"
+          git tag $VERSION
+          git push origin $VERSION
+
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ github.event.repository.name }}
+          package-type: container
+          min-versions-to-keep: 8
+          delete-only-untagged-versions: "false"
+
+
+

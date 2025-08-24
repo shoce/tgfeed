@@ -1,0 +1,8 @@
+apiVersion: v2
+name: helm.tgfeed
+description: Telegram bot to post updates from Atom feeds
+type: application
+version: __VERSION__
+appVersion: __VERSION__
+home: https://github.com/shoce/tgfeed/
+

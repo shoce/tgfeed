@@ -43,7 +43,7 @@ type TgFeedConfig struct {
 
 	FeedsCheckLast time.Time `yaml:"FeedCheckLast"`
 
-	FeedsUrls []string `yaml:"FeedUrls"`
+	FeedsUrls []string `yaml:"FeedsUrls"`
 	// = https://github.com/golang/go/releases.atom
 	// = https://gitea.com/gitea/helm-actions/atom/branch/main
 	// = https://gitea.com/gitea/helm-actions.atom

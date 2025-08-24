@@ -6,10 +6,9 @@ FROM golang:1.25.0 AS build
 ARG APPNAME
 ENV APPNAME=$APPNAME
 ENV CGO_ENABLED=0
-WORKDIR /root/
-RUN mkdir -p /root/$APPNAME/
-COPY *.go go.mod go.sum /root/$APPNAME/
-WORKDIR /root/$APPNAME/
+RUN mkdir -p /src/$APPNAME/
+COPY *.go go.mod go.sum /src/$APPNAME/
+WORKDIR /src/$APPNAME/
 RUN go version
 RUN go get -v
 RUN ls -l -a
@@ -26,7 +25,7 @@ RUN apk add --no-cache gcompat && ln -s -f -v ld-linux-x86-64.so.2 /lib/libresol
 RUN mkdir -p /opt/$APPNAME/
 COPY *.text /opt/$APPNAME/
 RUN ls -l -a /opt/$APPNAME/
-COPY --from=build /root/$APPNAME/$APPNAME /bin/$APPNAME
+COPY --from=build /src/$APPNAME/$APPNAME /bin/$APPNAME
 WORKDIR /opt/$APPNAME/
 ENTRYPOINT /bin/$APPNAME
 

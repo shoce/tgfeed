@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sort"
 	"syscall"
 	"time"
 
@@ -177,6 +178,10 @@ func FeedsCheck() error {
 		if feed.Updated.Time.Before(Config.FeedsCheckLast) {
 			continue
 		}
+
+		sort.Slice(feed.Entries, func(i, j int) bool {
+			return feed.Entries[i].Updated.Time.Before(feed.Entries[j].Updated.Time)
+		})
 
 		for _, e := range feed.Entries {
 			if e.Updated.Time.Before(Config.FeedsCheckLast) {

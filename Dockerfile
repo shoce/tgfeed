@@ -23,9 +23,9 @@ ENV APPNAME=$APPNAME
 RUN apk add --no-cache tzdata
 RUN apk add --no-cache gcompat && ln -s -f -v ld-linux-x86-64.so.2 /lib/libresolv.so.2
 RUN mkdir -p /opt/$APPNAME/
+WORKDIR /opt/$APPNAME/
 COPY *.text /opt/$APPNAME/
 RUN ls -l -a /opt/$APPNAME/
 COPY --from=build /src/$APPNAME/$APPNAME /bin/$APPNAME
-WORKDIR /opt/$APPNAME/
 ENTRYPOINT /bin/$APPNAME
 

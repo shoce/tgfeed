@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 
 metadata:
-  name: tgposter
+  name: tgfeed
   namespace: {{ $.Release.Namespace }}
 
 data:

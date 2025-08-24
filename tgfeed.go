@@ -193,15 +193,16 @@ func FeedsCheck() error {
 				ChatId: Config.TgChatId,
 				Text: tg.Underline(
 					"%s • %s",
-					feed.Title, tg.Link(e.Updated.Time.UTC().Format("2006 Jan 2"), e.Link.Href),
+					tg.Esc(feed.Title), tg.Link(e.Updated.Time.UTC().Format("2006 Jan 2 15:04"), e.Link.Href),
 				) + NL +
-					NL +
 					tg.Esc(e.Title),
 
 				LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},
 			}); tgerr != nil {
 				return tgerr
 			}
+
+			time.Sleep(1 * time.Second)
 		}
 	}
 

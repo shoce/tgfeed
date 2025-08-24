@@ -41,7 +41,7 @@ type TgFeedConfig struct {
 
 	XmlDefaultSpace string `yaml:"XmlDefaultSpace"` // = "http://www.w3.org/2005/Atom"
 
-	FeedsCheckLast time.Time `yaml:"FeedCheckLast"`
+	FeedsCheckLast time.Time `yaml:"FeedsCheckLast"`
 
 	FeedsUrls []string `yaml:"FeedsUrls"`
 	// = https://github.com/golang/go/releases.atom

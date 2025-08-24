@@ -191,8 +191,9 @@ func FeedsCheck() error {
 
 			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 				ChatId: Config.TgChatId,
-				Text: tg.Underline("%s", feed.Title) + NL +
-					tg.Link(e.Updated.Time.UTC().Format("2006/Jan/2"), e.Link.Href) + NL +
+				Text: tg.Underline("%s", feed.Title) + tg.Esc(" • ") +
+					tg.Link(e.Updated.Time.UTC().Format("2006 Jan 2"), e.Link.Href) + NL +
+					NL +
 					tg.Esc(e.Title),
 
 				LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},

@@ -2,7 +2,7 @@
 ARG APPNAME=tgfeed
 
 # https://hub.docker.com/_/golang/tags
-FROM golang:1.25.0 AS build
+FROM golang:1.25.1 AS build
 ARG APPNAME
 ENV APPNAME=$APPNAME
 ENV CGO_ENABLED=0
@@ -17,7 +17,7 @@ RUN ls -l -a
 
 
 # https://hub.docker.com/_/alpine/tags
-FROM alpine:3.22.1
+FROM alpine:3.22
 ARG APPNAME
 ENV APPNAME=$APPNAME
 RUN apk add --no-cache tzdata

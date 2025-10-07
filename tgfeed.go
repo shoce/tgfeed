@@ -247,7 +247,7 @@ func tglog(msg string, args ...interface{}) (err error) {
 	log(msg, args...)
 	_, err = tg.SendMessage(tg.SendMessageRequest{
 		ChatId: Config.TgChatId,
-		Text:   tg.Esc(msg, args...),
+		Text:   tg.Escf(msg, args...),
 
 		DisableNotification: true,
 		LinkPreviewOptions:  tg.LinkPreviewOptions{IsDisabled: true},

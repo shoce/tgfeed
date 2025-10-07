@@ -202,14 +202,17 @@ func FeedsCheck() error {
 				continue
 			}
 
+			tgmsg := tg.Bold(tg.Link(
+				fmt.Sprintf("%s • %s", feed.Title, e.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
+				e.Link.Href,
+			)) + NL +
+				tg.Esc(e.Title)
+			if Config.DEBUG {
+				log("DEBUG tgmsg [%s]", tgmsg)
+			}
 			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
-				ChatId: Config.TgChatId,
-				Text: tg.Bold(tg.Link(
-					fmt.Sprintf("%s • %s", feed.Title, e.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
-					e.Link.Href,
-				)) + NL +
-					tg.Esc(e.Title),
-
+				ChatId:             Config.TgChatId,
+				Text:               tgmsg,
 				LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},
 			}); tgerr != nil {
 				return tgerr

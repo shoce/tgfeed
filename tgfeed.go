@@ -166,7 +166,8 @@ func FeedsCheck() error {
 
 		resp, err := http.Get(feedurl)
 		if err != nil {
-			return fmt.Errorf("%s %w", feedurl, err)
+			log("ERROR %s %v", feedurl, err)
+			continue
 		}
 		defer resp.Body.Close()
 
@@ -175,7 +176,8 @@ func FeedsCheck() error {
 
 		var feed Feed
 		if err := decoder.Decode(&feed); err != nil {
-			return fmt.Errorf("%s xml decode %w", feedurl, err)
+			log("ERROR %s xml decode %v", feedurl, err)
+			continue
 		}
 
 		sort.Slice(feed.Entries, func(i, j int) bool {

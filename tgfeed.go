@@ -34,7 +34,8 @@ type TgFeedConfig struct {
 
 	DEBUG bool `yaml:"DEBUG"`
 
-	Interval time.Duration `yaml:"Interval"`
+	Interval        time.Duration `yaml:"Interval"`
+	MessageInterval time.Duration `yaml:"MessageInterval"`
 
 	TgApiUrlBase string `yaml:"TgApiUrlBase"` // = "https://api.telegram.org"
 
@@ -57,6 +58,8 @@ var (
 	TZIST = time.FixedZone("IST", 330*60)
 
 	Ctx context.Context
+
+	MessageIntervalDefault = 3 * time.Second
 
 	HttpClient = &http.Client{}
 )
@@ -85,6 +88,11 @@ func init() {
 	if Config.Interval == 0 {
 		log("ERROR Interval <0>")
 		os.Exit(1)
+	}
+	log("MessageInterval <%v>", Config.MessageInterval)
+	if Config.MessageInterval == 0 {
+		Config.MessageInterval = MessageIntervalDefault
+		log("MessageInterval <%v>", Config.MessageInterval)
 	}
 
 	if Config.TgToken == "" {
@@ -207,7 +215,7 @@ func FeedsCheck() error {
 				return tgerr
 			}
 
-			time.Sleep(3 * time.Second)
+			time.Sleep(Config.MessageInterval)
 		}
 	}
 

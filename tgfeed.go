@@ -161,7 +161,7 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 func FeedsCheck() error {
 	for _, feedurl := range Config.FeedsUrls {
 		if Config.DEBUG {
-			log("DEBUG feed url %s", feedurl)
+			log("DEBUG url [%s]", feedurl)
 		}
 
 		resp, err := http.Get(feedurl)
@@ -186,7 +186,7 @@ func FeedsCheck() error {
 
 		for _, e := range feed.Entries {
 			if Config.DEBUG {
-				log("DEBUG feed entry [%s] updated <%s>", e.Title, e.Updated.Time)
+				log("DEBUG url [%s] title [%s] updated <%s>", feedurl, e.Title, e.Updated.Time)
 			}
 
 			if e.Updated.Time.Before(Config.FeedsCheckLast) {

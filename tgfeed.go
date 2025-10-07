@@ -195,7 +195,7 @@ func FeedsCheck() error {
 
 		for _, e := range feed.Entries {
 			if Config.DEBUG {
-				log("DEBUG url %s title [%s] updated <%s>", feedurl, e.Title, e.Updated.Time)
+				log("DEBUG url %s title [%s] updated <%s> link [%s]", feedurl, e.Title, e.Updated.Time, e.Link.Href)
 			}
 
 			if e.Updated.Time.Before(Config.FeedsCheckLast) {

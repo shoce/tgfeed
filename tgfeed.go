@@ -207,7 +207,7 @@ func FeedsCheck() error {
 				return tgerr
 			}
 
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 		}
 	}
 

@@ -194,8 +194,10 @@ func FeedsCheck() error {
 		})
 
 		for _, e := range feed.Entries {
+			etitle := strings.TrimSpace(e.Title)
+
 			if Config.DEBUG {
-				log("DEBUG url %s title [%s] updated <%s> link [%s]", feedurl, e.Title, e.Updated.Time, e.Link.Href)
+				log("DEBUG url %s title [%s] updated <%s> link [%s]", feedurl, etitle, e.Updated.Time, e.Link.Href)
 			}
 
 			if e.Updated.Time.Before(Config.FeedsCheckLast) {
@@ -206,7 +208,7 @@ func FeedsCheck() error {
 				fmt.Sprintf("%s • %s", feed.Title, e.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
 				e.Link.Href,
 			)) + NL +
-				tg.Esc(strings.TrimSpace(e.Title))
+				tg.Esc(etitle)
 			if Config.DEBUG {
 				log("DEBUG tgmsg [%s]", tgmsg)
 			}

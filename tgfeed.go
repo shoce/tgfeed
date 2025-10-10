@@ -206,7 +206,7 @@ func FeedsCheck() error {
 				fmt.Sprintf("%s • %s", feed.Title, e.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
 				e.Link.Href,
 			)) + NL +
-				tg.Esc(e.Title)
+				tg.Esc(strings.TrimSpace(e.Title))
 			if Config.DEBUG {
 				log("DEBUG tgmsg [%s]", tgmsg)
 			}

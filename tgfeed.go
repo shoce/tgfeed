@@ -1,7 +1,5 @@
 /*
-
 GoGet GoFmt GoBuildNull GoBuild
-
 */
 
 package main
@@ -64,6 +62,46 @@ var (
 	HttpClient = &http.Client{}
 )
 
+func ConfigGet() error {
+	if err := Config.Get(); err != nil {
+		return fmt.Errorf("Config.Get %v", err)
+	}
+
+	if Config.DEBUG {
+		perr("DEBUG <true>")
+	}
+
+	perr("Interval <%v>", Config.Interval)
+	if Config.Interval == 0 {
+		return fmt.Errorf("Interval <0>")
+	}
+	perr("MessageInterval <%v>", Config.MessageInterval)
+	if Config.MessageInterval == 0 {
+		Config.MessageInterval = MessageIntervalDefault
+		perr("MessageInterval <%v>", Config.MessageInterval)
+	}
+
+	if Config.TgToken == "" {
+		return fmt.Errorf("TgToken empty")
+	}
+
+	tg.ApiToken = Config.TgToken
+
+	if Config.TgChatId == "" {
+		return fmt.Errorf("TgChatId empty")
+	}
+
+	if Config.DEBUG {
+		perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
+	}
+
+	if Config.DEBUG {
+		perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, " "))
+	}
+
+	return nil
+}
+
 func init() {
 	Ctx = context.TODO()
 
@@ -71,45 +109,14 @@ func init() {
 		Config.YssUrl = s
 	}
 	if Config.YssUrl == "" {
-		log("ERROR YssUrl empty")
+		perr("ERROR YssUrl empty")
 		os.Exit(1)
 	}
 
-	if err := Config.Get(); err != nil {
-		log("ERROR Config.Get %v", err)
+	if err := ConfigGet(); err != nil {
+		perr("ERROR ConfigGet %v", err)
 		os.Exit(1)
 	}
-
-	if Config.DEBUG {
-		log("DEBUG <true>")
-	}
-
-	log("Interval <%v>", Config.Interval)
-	if Config.Interval == 0 {
-		log("ERROR Interval <0>")
-		os.Exit(1)
-	}
-	log("MessageInterval <%v>", Config.MessageInterval)
-	if Config.MessageInterval == 0 {
-		Config.MessageInterval = MessageIntervalDefault
-		log("MessageInterval <%v>", Config.MessageInterval)
-	}
-
-	if Config.TgToken == "" {
-		log("ERROR TgToken empty")
-		os.Exit(1)
-	}
-
-	tg.ApiToken = Config.TgToken
-
-	if Config.TgChatId == "" {
-		log("ERROR TgChatId empty")
-		os.Exit(1)
-	}
-
-	log("FeedsCheckLast <%v>", Config.FeedsCheckLast)
-
-	log("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, " "))
 }
 
 func main() {
@@ -123,6 +130,11 @@ func main() {
 
 	for {
 		t0 := time.Now()
+
+		if err := ConfigGet(); err != nil {
+			perr("ERROR ConfigGet %v", err)
+			os.Exit(1)
+		}
 
 		if err := FeedsCheck(); err != nil {
 			tglog("ERROR FeedsCheck %v", err)
@@ -170,12 +182,12 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 func FeedsCheck() error {
 	for _, feedurl := range Config.FeedsUrls {
 		if Config.DEBUG {
-			log("DEBUG url %s", feedurl)
+			perr("DEBUG url %s", feedurl)
 		}
 
 		resp, err := http.Get(feedurl)
 		if err != nil {
-			log("ERROR %s %v", feedurl, err)
+			perr("ERROR %s %v", feedurl, err)
 			continue
 		}
 		defer resp.Body.Close()
@@ -185,7 +197,7 @@ func FeedsCheck() error {
 
 		var feed Feed
 		if err := decoder.Decode(&feed); err != nil {
-			log("ERROR %s xml decode %v", feedurl, err)
+			perr("ERROR %s xml decode %v", feedurl, err)
 			continue
 		}
 
@@ -197,7 +209,7 @@ func FeedsCheck() error {
 			etitle := strings.TrimSpace(e.Title)
 
 			if Config.DEBUG {
-				log("DEBUG url %s title [%s] updated <%s> link [%s]", feedurl, etitle, e.Updated.Time, e.Link.Href)
+				perr("DEBUG url %s title [%s] updated <%s> link [%s]", feedurl, etitle, e.Updated.Time, e.Link.Href)
 			}
 
 			if e.Updated.Time.Before(Config.FeedsCheckLast) {
@@ -210,7 +222,7 @@ func FeedsCheck() error {
 			)) + NL +
 				tg.Esc(etitle)
 			if Config.DEBUG {
-				log("DEBUG tgmsg [%s]", tgmsg)
+				perr("DEBUG tgmsg [%s]", tgmsg)
 			}
 			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 				ChatId:             Config.TgChatId,
@@ -241,12 +253,12 @@ func ts() string {
 	)
 }
 
-func log(msg string, args ...interface{}) {
+func perr(msg string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, ts()+" "+msg+NL, args...)
 }
 
 func tglog(msg string, args ...interface{}) (err error) {
-	log(msg, args...)
+	perr(msg, args...)
 	_, err = tg.SendMessage(tg.SendMessageRequest{
 		ChatId: Config.TgChatId,
 		Text:   tg.Esc(tg.F(msg, args...)),
@@ -281,7 +293,7 @@ func (config *TgFeedConfig) Get() error {
 	}
 
 	if Config.DEBUG {
-		//log("DEBUG Config.Get %+v", config)
+		//perr("DEBUG Config.Get %+v", config)
 	}
 
 	return nil
@@ -289,7 +301,7 @@ func (config *TgFeedConfig) Get() error {
 
 func (config *TgFeedConfig) Put() error {
 	if config.DEBUG {
-		//log("DEBUG Config.Put %s %+v", config.YssUrl, config)
+		//perr("DEBUG Config.Put %s %+v", config.YssUrl, config)
 	}
 
 	rbb, err := yaml.Marshal(config)

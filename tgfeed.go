@@ -1,6 +1,4 @@
-/*
-GoGet GoFmt GoBuildNull GoBuild
-*/
+// GoGet GoFmt GoBuildNull GoBuild
 
 package main
 

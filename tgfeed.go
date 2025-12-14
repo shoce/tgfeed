@@ -256,7 +256,7 @@ func TgGetUpdates() error {
 
 			tgmsg := ""
 			for _, f := range Config.FeedsUrls {
-				tgmsg += tg.Esc(f) + NL
+				tgmsg += "– " + tg.Esc(f) + NL
 			}
 			if tgmsg == "" {
 				tgmsg = tg.Italic("no feeds")

@@ -33,7 +33,8 @@ type TgFeedConfig struct {
 	Interval        time.Duration `yaml:"Interval"`
 	MessageInterval time.Duration `yaml:"MessageInterval"`
 
-	TgApiUrlBase string `yaml:"TgApiUrlBase"` // = "https://api.telegram.org"
+	TgApiUrlBase    string `yaml:"TgApiUrlBase"` // = "https://api.telegram.org"
+	TgUpdatesOffset int64  `yaml:"TgUpdatesOffset"`
 
 	TgToken  string `yaml:"TgToken"`
 	TgChatId string `yaml:"TgChatId"`
@@ -100,6 +101,25 @@ func ConfigGet() error {
 	return nil
 }
 
+func TgUpdatesProcess() error {
+	uu, _, err := tg.GetUpdates(Config.TgUpdatesOffset)
+	if err != nil {
+		perr("ERROR tg.GetUpdates %v", err)
+	}
+
+	for _, u := range uu {
+		perr("Update %s", strings.ReplaceAll(tg.F("%+v", u), NL, "<NL>"))
+		Config.TgUpdatesOffset = u.UpdateId
+	}
+
+	if err := Config.Put(); err != nil {
+		perr("ERROR Config.Put %v", err)
+		return err
+	}
+
+	return nil
+}
+
 func init() {
 	Ctx = context.TODO()
 
@@ -132,6 +152,10 @@ func main() {
 		if err := ConfigGet(); err != nil {
 			perr("ERROR ConfigGet %v", err)
 			os.Exit(1)
+		}
+
+		if err := TgUpdatesProcess(); err != nil {
+			perr("ERROR TgUpdatesProcess %v", err)
 		}
 
 		if err := FeedsCheck(); err != nil {

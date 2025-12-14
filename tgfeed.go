@@ -32,6 +32,7 @@ const (
 	TgApiUrlDefault        = "https://api.telegram.org"
 	XmlDefaultSpaceDefault = "http://www.w3.org/2005/Atom"
 
+	IntervalDefault             = 99 * time.Second
 	TgGetUpdatesIntervalDefault = 59 * time.Second
 	TgSendIntervalDefault       = 3 * time.Second
 	FeedsCheckIntervalDefault   = 11 * time.Minute
@@ -81,30 +82,41 @@ func ConfigGet() error {
 		perr("DEBUG <true>")
 	}
 
-	perr("Interval <%v>", Config.Interval)
+	if Config.DEBUG {
+		perr("Interval <%v>", Config.Interval)
+	}
 	if Config.Interval == 0 {
-		return fmt.Errorf("Interval <0>")
+		Config.Interval = IntervalDefault
+		perr("Interval <%v>", Config.Interval)
 	}
 
-	perr("TgApiUrl [%s]", Config.TgApiUrl)
+	if Config.DEBUG {
+		perr("TgApiUrl [%s]", Config.TgApiUrl)
+	}
 	if Config.TgApiUrl == "" {
 		Config.TgApiUrl = TgApiUrlDefault
 		perr("TgApiUrl [%s]", Config.TgApiUrl)
 	}
 
-	perr("XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
+	if Config.DEBUG {
+		perr("XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
+	}
 	if Config.XmlDefaultSpace == "" {
 		Config.XmlDefaultSpace = XmlDefaultSpaceDefault
 		perr("XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
 	}
 
-	perr("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
+	if Config.DEBUG {
+		perr("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
+	}
 	if Config.TgGetUpdatesInterval == 0 {
 		Config.TgGetUpdatesInterval = TgGetUpdatesIntervalDefault
 		perr("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
 	}
 
-	perr("TgSendInterval <%v>", Config.TgSendInterval)
+	if Config.DEBUG {
+		perr("TgSendInterval <%v>", Config.TgSendInterval)
+	}
 	if Config.TgSendInterval == 0 {
 		Config.TgSendInterval = TgSendIntervalDefault
 		perr("TgSendInterval <%v>", Config.TgSendInterval)
@@ -124,16 +136,24 @@ func ConfigGet() error {
 		return fmt.Errorf("TgChatId empty")
 	}
 
-	perr("TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
+	if Config.DEBUG {
+		perr("TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
+	}
 
-	perr("FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
+	if Config.DEBUG {
+		perr("FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
+	}
 	if Config.FeedsCheckInterval == 0 {
 		Config.FeedsCheckInterval = FeedsCheckIntervalDefault
 		perr("FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
 	}
 
-	perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
-	perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, SP))
+	if Config.DEBUG {
+		perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
+	}
+	if Config.DEBUG {
+		perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, SP))
+	}
 
 	return nil
 }

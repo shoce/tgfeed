@@ -29,6 +29,7 @@ const (
 
 	TgGetUpdatesIntervalDefault = 59 * time.Second
 	TgSendIntervalDefault       = 3 * time.Second
+	FeedsCheckIntervalDefault   = 11 * time.Minute
 )
 
 type TgFeedConfig struct {
@@ -49,7 +50,8 @@ type TgFeedConfig struct {
 
 	XmlDefaultSpace string `yaml:"XmlDefaultSpace"` // [http://www.w3.org/2005/Atom]
 
-	FeedsCheckLast time.Time `yaml:"FeedsCheckLast"`
+	FeedsCheckInterval time.Duration `yaml:"FeedsCheckInterval"`
+	FeedsCheckLast     time.Time     `yaml:"FeedsCheckLast"`
 
 	FeedsUrls []string `yaml:"FeedsUrls"`
 	// (
@@ -110,6 +112,12 @@ func ConfigGet() error {
 	}
 
 	perr("TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
+
+	perr("FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
+	if Config.FeedsCheckInterval == 0 {
+		Config.FeedsCheckInterval = FeedsCheckIntervalDefault
+		perr("FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
+	}
 
 	perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
 	perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, SP))
@@ -291,6 +299,10 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 }
 
 func FeedsCheck() error {
+	if time.Since(Config.FeedsCheckLast) < Config.FeedsCheckInterval {
+		return nil
+	}
+
 	for _, feedurl := range Config.FeedsUrls {
 		if Config.DEBUG {
 			perr("DEBUG url %s", feedurl)

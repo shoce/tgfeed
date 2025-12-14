@@ -92,14 +92,10 @@ func ConfigGet() error {
 		return fmt.Errorf("TgChatId empty")
 	}
 
-	if Config.DEBUG {
-		perr("TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
-	}
+	perr("TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
 
-	if Config.DEBUG {
-		perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
-		perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, " "))
-	}
+	perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
+	perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, " "))
 
 	return nil
 }

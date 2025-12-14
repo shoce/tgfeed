@@ -27,6 +27,9 @@ const (
 
 	CmdList = "/list"
 
+	TgApiUrlDefault        = "https://api.telegram.org"
+	XmlDefaultSpaceDefault = "http://www.w3.org/2005/Atom"
+
 	TgGetUpdatesIntervalDefault = 59 * time.Second
 	TgSendIntervalDefault       = 3 * time.Second
 	FeedsCheckIntervalDefault   = 11 * time.Minute
@@ -41,24 +44,20 @@ type TgFeedConfig struct {
 	TgGetUpdatesInterval time.Duration `yaml:"TgGetUpdatesInterval"`
 	TgSendInterval       time.Duration `yaml:"TgSendInterval"`
 
-	TgApiUrlBase     string    `yaml:"TgApiUrlBase"` // [https://api.telegram.org]
+	TgApiUrl         string    `yaml:"TgApiUrl"`
 	TgToken          string    `yaml:"TgToken"`
 	TgBossChatId     string    `yaml:"TgBossChatId"`
 	TgGetUpdatesLast time.Time `yaml:"TgGetUpdatesLast"`
 	TgUpdatesOffset  int64     `yaml:"TgUpdatesOffset"`
 	TgChatId         string    `yaml:"TgChatId"`
 
-	XmlDefaultSpace string `yaml:"XmlDefaultSpace"` // [http://www.w3.org/2005/Atom]
+	XmlDefaultSpace string `yaml:"XmlDefaultSpace"`
 
 	FeedsCheckInterval time.Duration `yaml:"FeedsCheckInterval"`
 	FeedsCheckLast     time.Time     `yaml:"FeedsCheckLast"`
 
 	FeedsUrls []string `yaml:"FeedsUrls"`
-	// (
-	// [https://github.com/golang/go/releases.atom]
-	// [https://gitea.com/gitea/helm-actions/atom/branch/main]
-	// [https://gitea.com/gitea/helm-actions.atom]
-	// )
+	// ( [https://github.com/golang/go/releases.atom] )
 }
 
 var (
@@ -83,6 +82,18 @@ func ConfigGet() error {
 	perr("Interval <%v>", Config.Interval)
 	if Config.Interval == 0 {
 		return fmt.Errorf("Interval <0>")
+	}
+
+	perr("TgApiUrl [%s]", Config.TgApiUrl)
+	if Config.TgApiUrl == "" {
+		Config.TgApiUrl = TgApiUrlDefault
+		perr("TgApiUrl [%s]", Config.TgApiUrl)
+	}
+
+	perr("XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
+	if Config.XmlDefaultSpace == "" {
+		Config.XmlDefaultSpace = XmlDefaultSpaceDefault
+		perr("XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
 	}
 
 	perr("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)

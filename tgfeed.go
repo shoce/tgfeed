@@ -184,6 +184,16 @@ func TgGetUpdates() error {
 		if strings.HasPrefix(mtext, "https://") {
 			Config.FeedsUrls = append(Config.FeedsUrls, mtext)
 
+			FeedsUrlsMap := make(map[string]struct{}, len(Config.FeedsUrls))
+			for _, v := range Config.FeedsUrls {
+				FeedsUrlsMap[v] = struct{}{}
+			}
+			FeedsUrlsUniq := make([]string, 0, len(Config.FeedsUrls))
+			for v := range FeedsUrlsMap {
+				FeedsUrlsUniq = append(FeedsUrlsUniq, v)
+			}
+			Config.FeedsUrls = FeedsUrlsUniq
+
 			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
 				ChatId:    fmt.Sprintf("%d", m.Chat.Id),
 				MessageId: m.MessageId,

@@ -25,7 +25,9 @@ const (
 	SP = " "
 	NL = "\n"
 
-	CmdList = "/list"
+	CmdAdd    = "/add"
+	CmdRemove = "/rm"
+	CmdList   = "/list"
 
 	TgApiUrlDefault        = "https://api.telegram.org"
 	XmlDefaultSpaceDefault = "http://www.w3.org/2005/Atom"
@@ -176,12 +178,13 @@ func TgGetUpdates() error {
 			MessageId: m.MessageId,
 			Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👾"}},
 		}); tgerr != nil {
-			perr("ERROR tg.SetMessageReaction: %v", tgerr)
+			perr("ERROR tg.SetMessageReaction %v", tgerr)
 		}
 
 		mtext := strings.TrimSpace(m.Text)
 
-		if strings.HasPrefix(mtext, "https://") {
+		if mtff := strings.Fields(mtext); (len(mtff) == 2 && mtff[0] == CmdAdd && strings.HasPrefix(mtff[1], "https://")) || (len(mtff) == 1 && strings.HasPrefix(mtff[0], "https://")) {
+
 			perr("ADD feed [%s]", mtext)
 			Config.FeedsUrls = append(Config.FeedsUrls, mtext)
 
@@ -201,9 +204,32 @@ func TgGetUpdates() error {
 				MessageId: m.MessageId,
 				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👍"}},
 			}); tgerr != nil {
-				perr("ERROR tg.SetMessageReaction: %v", tgerr)
+				perr("ERROR tg.SetMessageReaction %v", tgerr)
 			}
+
+		} else if mtff := strings.Fields(mtext); len(mtff) == 2 && mtff[0] == CmdRemove && strings.HasPrefix(mtff[1], "https://") {
+
+			perr("REMOVE feed [%s]", mtff[1])
+
+			FeedsUrlsNew := make([]string, 0, len(Config.FeedsUrls))
+			for _, v := range Config.FeedsUrls {
+				if v == mtff[1] {
+					continue
+				}
+				FeedsUrlsNew = append(FeedsUrlsNew, v)
+			}
+			Config.FeedsUrls = FeedsUrlsNew
+
+			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
+				ChatId:    fmt.Sprintf("%d", m.Chat.Id),
+				MessageId: m.MessageId,
+				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👍"}},
+			}); tgerr != nil {
+				perr("ERROR tg.SetMessageReaction %v", tgerr)
+			}
+
 		} else if mtext == CmdList {
+
 			perr("LIST command")
 			tgmsg := ""
 			for _, f := range Config.FeedsUrls {
@@ -220,14 +246,17 @@ func TgGetUpdates() error {
 			}); tgerr != nil {
 				perr("ERROR tg.SendMessage %v", tgerr)
 			}
+
 		} else {
+
 			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
 				ChatId:    fmt.Sprintf("%d", m.Chat.Id),
 				MessageId: m.MessageId,
 				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "🤷‍♂"}},
 			}); tgerr != nil {
-				perr("ERROR tg.SetMessageReaction: %v", tgerr)
+				perr("ERROR tg.SetMessageReaction %v", tgerr)
 			}
+
 		}
 
 		Config.TgUpdatesOffset = u.UpdateId

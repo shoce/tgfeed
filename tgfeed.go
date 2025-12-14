@@ -34,10 +34,10 @@ type TgFeedConfig struct {
 	MessageInterval time.Duration `yaml:"MessageInterval"`
 
 	TgApiUrlBase    string `yaml:"TgApiUrlBase"` // [https://api.telegram.org]
+	TgToken         string `yaml:"TgToken"`
+	TgBossChatId    string `yaml:"TgChatId"`
 	TgUpdatesOffset int64  `yaml:"TgUpdatesOffset"`
-
-	TgToken  string `yaml:"TgToken"`
-	TgChatId string `yaml:"TgChatId"`
+	TgChatId        string `yaml:"TgChatId"`
 
 	XmlDefaultSpace string `yaml:"XmlDefaultSpace"` // [http://www.w3.org/2005/Atom]
 
@@ -87,6 +87,10 @@ func ConfigGet() error {
 	}
 
 	tg.ApiToken = Config.TgToken
+
+	if Config.TgBossChatId == "" {
+		return fmt.Errorf("TgBossChatId empty")
+	}
 
 	if Config.TgChatId == "" {
 		return fmt.Errorf("TgChatId empty")
@@ -320,7 +324,7 @@ func perr(msg string, args ...interface{}) {
 func tglog(msg string, args ...interface{}) (err error) {
 	perr(msg, args...)
 	_, err = tg.SendMessage(tg.SendMessageRequest{
-		ChatId: Config.TgChatId,
+		ChatId: Config.TgBossChatId,
 		Text:   tg.Esc(tg.F(msg, args...)),
 
 		DisableNotification: true,

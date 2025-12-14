@@ -27,7 +27,8 @@ const (
 
 	CmdList = "/list"
 
-	MessageIntervalDefault = 3 * time.Second
+	TgGetUpdatesIntervalDefault = 59 * time.Second
+	TgSendIntervalDefault       = 3 * time.Second
 )
 
 type TgFeedConfig struct {
@@ -35,14 +36,16 @@ type TgFeedConfig struct {
 
 	DEBUG bool `yaml:"DEBUG"`
 
-	Interval        time.Duration `yaml:"Interval"`
-	MessageInterval time.Duration `yaml:"MessageInterval"`
+	Interval             time.Duration `yaml:"Interval"`
+	TgGetUpdatesInterval time.Duration `yaml:"TgGetUpdatesInterval"`
+	TgSendInterval       time.Duration `yaml:"TgSendInterval"`
 
-	TgApiUrlBase    string `yaml:"TgApiUrlBase"` // [https://api.telegram.org]
-	TgToken         string `yaml:"TgToken"`
-	TgBossChatId    string `yaml:"TgBossChatId"`
-	TgUpdatesOffset int64  `yaml:"TgUpdatesOffset"`
-	TgChatId        string `yaml:"TgChatId"`
+	TgApiUrlBase     string    `yaml:"TgApiUrlBase"` // [https://api.telegram.org]
+	TgToken          string    `yaml:"TgToken"`
+	TgBossChatId     string    `yaml:"TgBossChatId"`
+	TgGetUpdatesLast time.Time `yaml:"TgGetUpdatesLast"`
+	TgUpdatesOffset  int64     `yaml:"TgUpdatesOffset"`
+	TgChatId         string    `yaml:"TgChatId"`
 
 	XmlDefaultSpace string `yaml:"XmlDefaultSpace"` // [http://www.w3.org/2005/Atom]
 
@@ -79,10 +82,17 @@ func ConfigGet() error {
 	if Config.Interval == 0 {
 		return fmt.Errorf("Interval <0>")
 	}
-	perr("MessageInterval <%v>", Config.MessageInterval)
-	if Config.MessageInterval == 0 {
-		Config.MessageInterval = MessageIntervalDefault
-		perr("MessageInterval <%v>", Config.MessageInterval)
+
+	perr("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
+	if Config.TgGetUpdatesInterval == 0 {
+		Config.TgGetUpdatesInterval = TgGetUpdatesIntervalDefault
+		perr("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
+	}
+
+	perr("TgSendInterval <%v>", Config.TgSendInterval)
+	if Config.TgSendInterval == 0 {
+		Config.TgSendInterval = TgSendIntervalDefault
+		perr("TgSendInterval <%v>", Config.TgSendInterval)
 	}
 
 	if Config.TgToken == "" {
@@ -102,16 +112,21 @@ func ConfigGet() error {
 	perr("TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
 
 	perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
-	perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, " "))
+	perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, SP))
 
 	return nil
 }
 
-func TgUpdatesProcess() error {
+func TgGetUpdates() error {
+	if time.Since(Config.TgGetUpdatesLast) < Config.TgGetUpdatesInterval {
+		return nil
+	}
+
 	uu, _, err := tg.GetUpdates(Config.TgUpdatesOffset + 1)
 	if err != nil {
 		perr("ERROR tg.GetUpdates %v", err)
 	}
+	Config.TgGetUpdatesLast = time.Now()
 
 	for _, u := range uu {
 		var m tg.Message
@@ -228,8 +243,8 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := TgUpdatesProcess(); err != nil {
-			perr("ERROR TgUpdatesProcess %v", err)
+		if err := TgGetUpdates(); err != nil {
+			perr("ERROR TgGetUpdates %v", err)
 		}
 
 		if err := FeedsCheck(); err != nil {
@@ -328,7 +343,7 @@ func FeedsCheck() error {
 				return tgerr
 			}
 
-			time.Sleep(Config.MessageInterval)
+			time.Sleep(Config.TgSendInterval)
 		}
 	}
 

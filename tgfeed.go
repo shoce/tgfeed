@@ -158,10 +158,17 @@ func TgUpdatesProcess() error {
 				perr("ERROR tg.SetMessageReaction: %v", tgerr)
 			}
 		} else if mtext == CmdList {
+			tgmsg := ""
+			for _, f := range Config.FeedsUrls {
+				tgmsg += tg.Esc(f) + NL
+			}
+			if tgmsg == "" {
+				tgmsg = tg.Italic("no feeds")
+			}
 			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 				ChatId:             fmt.Sprintf("%d", m.Chat.Id),
 				ReplyToMessageId:   m.MessageId,
-				Text:               strings.Join(Config.FeedsUrls, NL),
+				Text:               tgmsg,
 				LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},
 			}); tgerr != nil {
 				perr("ERROR tg.SendMessage %v", tgerr)

@@ -101,13 +101,19 @@ func ConfigGet() error {
 }
 
 func TgUpdatesProcess() error {
-	uu, _, err := tg.GetUpdates(Config.TgUpdatesOffset)
+	uu, _, err := tg.GetUpdates(Config.TgUpdatesOffset + 1)
 	if err != nil {
 		perr("ERROR tg.GetUpdates %v", err)
 	}
 
 	for _, u := range uu {
-		perr("Update %s", strings.ReplaceAll(tg.F("%+v", u), NL, "<NL>"))
+		if u.Message.MessageId != 0 {
+			perr("Update <%d> Message %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u.Message), NL, "<NL>"))
+		} else if u.ChannelPost.MessageId != 0 {
+			perr("Update <%d> ChannelPost %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u.ChannelPost), NL, "<NL>"))
+		} else {
+			perr("Update <%d> %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u), NL, "<NL>"))
+		}
 		Config.TgUpdatesOffset = u.UpdateId
 	}
 

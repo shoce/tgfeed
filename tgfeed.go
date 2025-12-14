@@ -22,7 +22,12 @@ import (
 )
 
 const (
+	SP = " "
 	NL = "\n"
+
+	CmdList = "/list"
+
+	MessageIntervalDefault = 3 * time.Second
 )
 
 type TgFeedConfig struct {
@@ -57,8 +62,6 @@ var (
 	TZIST = time.FixedZone("IST", 330*60)
 
 	Ctx context.Context
-
-	MessageIntervalDefault = 3 * time.Second
 
 	HttpClient = &http.Client{}
 )
@@ -142,14 +145,26 @@ func TgUpdatesProcess() error {
 			perr("ERROR tg.SetMessageReaction: %v", tgerr)
 		}
 
-		if mtext := strings.TrimSpace(m.Text); strings.HasPrefix(mtext, "https://") {
+		mtext := strings.TrimSpace(m.Text)
+
+		if strings.HasPrefix(mtext, "https://") {
 			Config.FeedsUrls = append(Config.FeedsUrls, mtext)
+
 			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
 				ChatId:    fmt.Sprintf("%d", m.Chat.Id),
 				MessageId: m.MessageId,
 				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👍"}},
 			}); tgerr != nil {
 				perr("ERROR tg.SetMessageReaction: %v", tgerr)
+			}
+		} else if mtext == CmdList {
+			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
+				ChatId:             fmt.Sprintf("%d", m.Chat.Id),
+				ReplyToMessageId:   m.MessageId,
+				Text:               strings.Join(Config.FeedsUrls, NL),
+				LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},
+			}); tgerr != nil {
+				perr("ERROR tg.SendMessage %v", tgerr)
 			}
 		} else {
 			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{

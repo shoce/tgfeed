@@ -33,20 +33,22 @@ type TgFeedConfig struct {
 	Interval        time.Duration `yaml:"Interval"`
 	MessageInterval time.Duration `yaml:"MessageInterval"`
 
-	TgApiUrlBase    string `yaml:"TgApiUrlBase"` // = "https://api.telegram.org"
+	TgApiUrlBase    string `yaml:"TgApiUrlBase"` // [https://api.telegram.org]
 	TgUpdatesOffset int64  `yaml:"TgUpdatesOffset"`
 
 	TgToken  string `yaml:"TgToken"`
 	TgChatId string `yaml:"TgChatId"`
 
-	XmlDefaultSpace string `yaml:"XmlDefaultSpace"` // = "http://www.w3.org/2005/Atom"
+	XmlDefaultSpace string `yaml:"XmlDefaultSpace"` // [http://www.w3.org/2005/Atom]
 
 	FeedsCheckLast time.Time `yaml:"FeedsCheckLast"`
 
 	FeedsUrls []string `yaml:"FeedsUrls"`
-	// = https://github.com/golang/go/releases.atom
-	// = https://gitea.com/gitea/helm-actions/atom/branch/main
-	// = https://gitea.com/gitea/helm-actions.atom
+	// (
+	// [https://github.com/golang/go/releases.atom]
+	// [https://gitea.com/gitea/helm-actions/atom/branch/main]
+	// [https://gitea.com/gitea/helm-actions.atom]
+	// )
 }
 
 var (

@@ -107,13 +107,46 @@ func TgUpdatesProcess() error {
 	}
 
 	for _, u := range uu {
+		var m tg.Message
 		if u.Message.MessageId != 0 {
 			perr("Update <%d> Message %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u.Message), NL, "<NL>"))
+			m = u.Message
 		} else if u.ChannelPost.MessageId != 0 {
 			perr("Update <%d> ChannelPost %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u.ChannelPost), NL, "<NL>"))
+			m = u.ChannelPost
 		} else {
 			perr("Update <%d> %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u), NL, "<NL>"))
 		}
+		if m.Chat.Id != 0 && m.MessageId != 0 {
+			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
+				ChatId:    fmt.Sprintf("%d", m.Chat.Id),
+				MessageId: m.MessageId,
+				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👾"}},
+			}); tgerr != nil {
+				perr("ERROR tg.SetMessageReaction: %v", tgerr)
+			}
+
+			if mtext := strings.TrimSpace(m.Text); strings.HasPrefix(mtext, "https://") {
+				Config.FeedsUrls = append(Config.FeedsUrls, mtext)
+				if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
+					ChatId:    fmt.Sprintf("%d", m.Chat.Id),
+					MessageId: m.MessageId,
+					Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👍"}},
+				}); tgerr != nil {
+					perr("ERROR tg.SetMessageReaction: %v", tgerr)
+				}
+			} else {
+				if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
+					ChatId:    fmt.Sprintf("%d", m.Chat.Id),
+					MessageId: m.MessageId,
+					Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "🤷‍♂"}},
+				}); tgerr != nil {
+					perr("ERROR tg.SetMessageReaction: %v", tgerr)
+				}
+			}
+
+		}
+
 		Config.TgUpdatesOffset = u.UpdateId
 	}
 

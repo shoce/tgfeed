@@ -230,7 +230,8 @@ func TgGetUpdates() error {
 
 		} else if mtext == CmdList {
 
-			perr("LIST command")
+			perr("LIST feeds")
+
 			tgmsg := ""
 			for _, f := range Config.FeedsUrls {
 				tgmsg += tg.Esc(f) + NL
@@ -245,6 +246,14 @@ func TgGetUpdates() error {
 				LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},
 			}); tgerr != nil {
 				perr("ERROR tg.SendMessage %v", tgerr)
+			}
+
+			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
+				ChatId:    fmt.Sprintf("%d", m.Chat.Id),
+				MessageId: m.MessageId,
+				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👍"}},
+			}); tgerr != nil {
+				perr("ERROR tg.SetMessageReaction %v", tgerr)
 			}
 
 		} else {

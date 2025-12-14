@@ -182,6 +182,7 @@ func TgGetUpdates() error {
 		mtext := strings.TrimSpace(m.Text)
 
 		if strings.HasPrefix(mtext, "https://") {
+			perr("ADD feed [%s]", mtext)
 			Config.FeedsUrls = append(Config.FeedsUrls, mtext)
 
 			FeedsUrlsMap := make(map[string]struct{}, len(Config.FeedsUrls))
@@ -203,6 +204,7 @@ func TgGetUpdates() error {
 				perr("ERROR tg.SetMessageReaction: %v", tgerr)
 			}
 		} else if mtext == CmdList {
+			perr("LIST command")
 			tgmsg := ""
 			for _, f := range Config.FeedsUrls {
 				tgmsg += tg.Esc(f) + NL

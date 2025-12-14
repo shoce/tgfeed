@@ -93,10 +93,11 @@ func ConfigGet() error {
 	}
 
 	if Config.DEBUG {
-		perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
+		perr("TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
 	}
 
 	if Config.DEBUG {
+		perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
 		perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, " "))
 	}
 

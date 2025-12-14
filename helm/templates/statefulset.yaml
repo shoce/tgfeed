@@ -19,6 +19,8 @@ spec:
       name: {{ $.Values.AppName }}
       labels:
         app: {{ $.Values.AppName }}
+      annotations:
+        image: "{{ $.Values.ImageNameGithubTgFeed }}:{{ $.Values.ImageTagGithubTgFeed }}"
     spec:
 
       containers:

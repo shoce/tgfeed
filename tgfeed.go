@@ -185,11 +185,12 @@ func TgGetUpdates() error {
 			Config.FeedsUrls = append(Config.FeedsUrls, mtext)
 
 			FeedsUrlsMap := make(map[string]struct{}, len(Config.FeedsUrls))
-			for _, v := range Config.FeedsUrls {
-				FeedsUrlsMap[v] = struct{}{}
-			}
 			FeedsUrlsUniq := make([]string, 0, len(Config.FeedsUrls))
-			for v := range FeedsUrlsMap {
+			for _, v := range Config.FeedsUrls {
+				if _, ok := FeedsUrlsMap[v]; ok {
+					continue
+				}
+				FeedsUrlsMap[v] = struct{}{}
 				FeedsUrlsUniq = append(FeedsUrlsUniq, v)
 			}
 			Config.FeedsUrls = FeedsUrlsUniq

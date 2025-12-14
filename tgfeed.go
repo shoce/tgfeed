@@ -40,7 +40,7 @@ type TgFeedConfig struct {
 
 	TgApiUrlBase    string `yaml:"TgApiUrlBase"` // [https://api.telegram.org]
 	TgToken         string `yaml:"TgToken"`
-	TgBossChatId    string `yaml:"TgChatId"`
+	TgBossChatId    string `yaml:"TgBossChatId"`
 	TgUpdatesOffset int64  `yaml:"TgUpdatesOffset"`
 	TgChatId        string `yaml:"TgChatId"`
 

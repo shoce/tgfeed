@@ -202,11 +202,13 @@ func TgGetUpdates() error {
 		}
 
 		mtext := strings.TrimSpace(m.Text)
+		mtff := strings.Fields(mtext)
 
-		if mtff := strings.Fields(mtext); (len(mtff) == 2 && mtff[0] == CmdAdd && strings.HasPrefix(mtff[1], "https://")) || (len(mtff) == 1 && strings.HasPrefix(mtff[0], "https://")) {
+		if (len(mtff) == 2 && mtff[0] == CmdAdd && strings.HasPrefix(mtff[1], "https://")) || (len(mtff) == 1 && strings.HasPrefix(mtff[0], "https://")) {
 
-			perr("ADD feed [%s]", mtext)
-			Config.FeedsUrls = append(Config.FeedsUrls, mtext)
+			mtfu := mtff[len(mtff)-1]
+			perr("ADD feed [%s]", mtfu)
+			Config.FeedsUrls = append(Config.FeedsUrls, mtfu)
 
 			FeedsUrlsMap := make(map[string]struct{}, len(Config.FeedsUrls))
 			FeedsUrlsUniq := make([]string, 0, len(Config.FeedsUrls))
@@ -227,7 +229,7 @@ func TgGetUpdates() error {
 				perr("ERROR tg.SetMessageReaction %v", tgerr)
 			}
 
-		} else if mtff := strings.Fields(mtext); len(mtff) == 2 && mtff[0] == CmdRemove && strings.HasPrefix(mtff[1], "https://") {
+		} else if len(mtff) == 2 && mtff[0] == CmdRemove && strings.HasPrefix(mtff[1], "https://") {
 
 			perr("REMOVE feed [%s]", mtff[1])
 
@@ -248,7 +250,7 @@ func TgGetUpdates() error {
 				perr("ERROR tg.SetMessageReaction %v", tgerr)
 			}
 
-		} else if mtext == CmdList {
+		} else if len(mtff) == 1 && mtff[0] == CmdList {
 
 			perr("LIST feeds")
 

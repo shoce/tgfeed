@@ -254,13 +254,12 @@ func TgGetUpdates() error {
 
 			perr("LIST feeds")
 
-			tgmsg := ""
+			tgmsg := "(" + NL
 			for _, f := range Config.FeedsUrls {
-				tgmsg += "– " + tg.Esc(f) + NL
+				tgmsg += tg.F("[%s]", f) + NL
 			}
-			if tgmsg == "" {
-				tgmsg = tg.Italic("no feeds")
-			}
+			tgmsg += ")" + NL
+			tgmsg = tg.Esc(tgmsg)
 			if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 				ChatId:             fmt.Sprintf("%d", m.Chat.Id),
 				ReplyToMessageId:   m.MessageId,

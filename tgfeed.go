@@ -255,8 +255,8 @@ func TgGetUpdates() error {
 			perr("LIST feeds")
 
 			tgmsg := "(" + NL
-			for _, f := range Config.FeedsUrls {
-				tgmsg += tg.F("[%s]", f) + NL
+			for i, f := range Config.FeedsUrls {
+				tgmsg += tg.F("#<%d> [%s]", i, f) + NL
 			}
 			tgmsg += ")" + NL
 			tgmsg = tg.Esc(tgmsg)

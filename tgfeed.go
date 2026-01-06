@@ -170,6 +170,9 @@ func TgGetUpdates() error {
 	Config.TgGetUpdatesLast = time.Now()
 
 	for _, u := range uu {
+
+		Config.TgUpdatesOffset = u.UpdateId
+
 		var m tg.Message
 		if u.Message.MessageId != 0 {
 			perr("Update <%d> Message %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u.Message), NL, "<NL>"))
@@ -183,13 +186,11 @@ func TgGetUpdates() error {
 
 		if m.MessageId == 0 {
 			perr("Update <%d> MessageId <0>", u.UpdateId)
-			Config.TgUpdatesOffset = u.UpdateId
 			continue
 		}
 
 		if tg.F("%d", m.Chat.Id) != Config.TgBossChatId {
 			perr("Update <%d> not from TgBossChatId", u.UpdateId)
-			Config.TgUpdatesOffset = u.UpdateId
 			continue
 		}
 
@@ -201,8 +202,7 @@ func TgGetUpdates() error {
 			perr("ERROR tg.SetMessageReaction %v", tgerr)
 		}
 
-		mtext := strings.TrimSpace(m.Text)
-		mtff := strings.Fields(mtext)
+		mtff := strings.Fields(m.Text)
 
 		if (len(mtff) == 2 && mtff[0] == CmdAdd && strings.HasPrefix(mtff[1], "https://")) || (len(mtff) == 1 && strings.HasPrefix(mtff[0], "https://")) {
 
@@ -212,6 +212,15 @@ func TgGetUpdates() error {
 			feed, err := FeedGet(mtfu)
 			if err != nil {
 				perr("FeedGet [%s] %v", mtfu, err)
+				tgmsg := tg.Esc(tg.F("FeedGet %v", err))
+				if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
+					ChatId:             fmt.Sprintf("%d", m.Chat.Id),
+					ReplyToMessageId:   m.MessageId,
+					Text:               tgmsg,
+					LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},
+				}); tgerr != nil {
+					perr("ERROR tg.SendMessage %v", tgerr)
+				}
 				continue
 			}
 			if len(feed.Entries) > 0 {
@@ -302,8 +311,6 @@ func TgGetUpdates() error {
 			}
 
 		}
-
-		Config.TgUpdatesOffset = u.UpdateId
 	}
 
 	if err := Config.Put(); err != nil {

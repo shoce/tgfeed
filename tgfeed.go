@@ -408,7 +408,7 @@ func AllFeedsTgSend() error {
 	}
 
 	for _, feedurl := range Config.FeedsUrls {
-		err := FeedTgSend(feedurl)
+		err := FeedAllEntriesTgSend(feedurl)
 		if err != nil {
 			perr("ERROR FeedCheck [%s] %v", feedurl, err)
 		}
@@ -469,7 +469,7 @@ func FeedEntryTgSend(feed *Feed, entry FeedEntry) error {
 	return nil
 }
 
-func FeedTgSend(feedurl string) error {
+func FeedAllEntriesTgSend(feedurl string) error {
 	feed, err := FeedGet(feedurl)
 	if err != nil {
 		return err

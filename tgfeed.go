@@ -25,9 +25,9 @@ const (
 	SP = " "
 	NL = "\n"
 
-	CmdAdd    = "/add"
-	CmdRemove = "/rm"
-	CmdList   = "/list"
+	TgCmdAddDefault    = "/add"
+	TgCmdRemoveDefault = "/rem"
+	TgCmdListDefault   = "/list"
 
 	TgApiUrlDefault        = "https://api.telegram.org"
 	XmlDefaultSpaceDefault = "http://www.w3.org/2005/Atom"
@@ -53,6 +53,10 @@ type TgFeedConfig struct {
 	TgGetUpdatesLast time.Time `yaml:"TgGetUpdatesLast"`
 	TgUpdatesOffset  int64     `yaml:"TgUpdatesOffset"`
 	TgChatId         string    `yaml:"TgChatId"`
+
+	TgCmdAdd    string `yaml:"TgCmdAdd"`
+	TgCmdRemove string `yaml:"TgCmdRemove"`
+	TgCmdList   string `yaml:"TgCmdList"`
 
 	XmlDefaultSpace string `yaml:"XmlDefaultSpace"`
 
@@ -126,6 +130,16 @@ func ConfigGet() error {
 		return fmt.Errorf("TgChatId empty")
 	}
 
+	if Config.TgCmdAdd == "" {
+		Config.TgCmdAdd = TgCmdAddDefault
+	}
+	if Config.TgCmdRemove == "" {
+		Config.TgCmdRemove = TgCmdRemoveDefault
+	}
+	if Config.TgCmdList == "" {
+		Config.TgCmdList = TgCmdListDefault
+	}
+
 	perr("DEBUG TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
 
 	perr("DEBUG FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
@@ -186,7 +200,7 @@ func TgGetUpdates() error {
 
 		mtff := strings.Fields(m.Text)
 
-		if (len(mtff) == 2 && mtff[0] == CmdAdd && strings.HasPrefix(mtff[1], "https://")) || (len(mtff) == 1 && strings.HasPrefix(mtff[0], "https://")) {
+		if (len(mtff) == 2 && mtff[0] == Config.TgCmdAdd && strings.HasPrefix(mtff[1], "https://")) || (len(mtff) == 1 && strings.HasPrefix(mtff[0], "https://")) {
 
 			mtfu := mtff[len(mtff)-1]
 			perr("ADD feed [%s]", mtfu)
@@ -234,7 +248,7 @@ func TgGetUpdates() error {
 				perr("ERROR tg.SetMessageReaction %v", tgerr)
 			}
 
-		} else if len(mtff) == 2 && mtff[0] == CmdRemove && strings.HasPrefix(mtff[1], "https://") {
+		} else if len(mtff) == 2 && mtff[0] == Config.TgCmdRemove && strings.HasPrefix(mtff[1], "https://") {
 
 			perr("REMOVE feed [%s]", mtff[1])
 
@@ -255,7 +269,7 @@ func TgGetUpdates() error {
 				perr("ERROR tg.SetMessageReaction %v", tgerr)
 			}
 
-		} else if len(mtff) == 1 && mtff[0] == CmdList {
+		} else if len(mtff) == 1 && mtff[0] == Config.TgCmdList {
 
 			perr("LIST feeds")
 

@@ -70,8 +70,6 @@ type TgFeedConfig struct {
 	FeedsCheckInterval time.Duration `yaml:"FeedsCheckInterval"`
 	FeedsCheckLast     time.Time     `yaml:"FeedsCheckLast"`
 
-	FeedsUrls []string `yaml:"FeedsUrls"`
-	// ( [https://github.com/golang/go/releases.atom] )
 	Feeds []Feed `yaml:"Feeds"`
 }
 
@@ -157,13 +155,11 @@ func ConfigGet() error {
 	}
 
 	perr("DEBUG FeedsCheckLast <%v>", Config.FeedsCheckLast)
-	perr("DEBUG FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, SP))
-
-	if len(Config.Feeds) == 0 {
-		for _, fu := range Config.FeedsUrls {
-			Config.Feeds = append(Config.Feeds, Feed{Url: fu, CheckLast: Config.FeedsCheckLast.Add(-FeedCheckLastAgoDefault)})
-		}
+	feedsurls := make([]string, len(Config.Feeds))
+	for i := range Config.Feeds {
+		feedsurls[i] = "[" + Config.Feeds[i].Url + "]"
 	}
+	perr("DEBUG Feeds <%d>( %s )", len(Config.Feeds), strings.Join(feedsurls, SP))
 
 	return nil
 }
@@ -240,8 +236,6 @@ func TgGetUpdates() error {
 					continue
 				}
 			}
-
-			Config.FeedsUrls = append(Config.FeedsUrls, mtfu)
 
 			add := true
 			for _, f := range Config.Feeds {

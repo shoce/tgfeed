@@ -216,7 +216,7 @@ func TgGetUpdates() error {
 			mtfu := mtff[len(mtff)-1]
 			perr("ADD feed [%s]", mtfu)
 
-			xmlfeed, err := FeedGet(mtfu)
+			atomfeed, err := FeedGet(mtfu)
 			if err != nil {
 				perr("FeedGet [%s] %v", mtfu, err)
 				tgmsg := tg.Esc(tg.F("FeedGet %v", err))
@@ -230,10 +230,10 @@ func TgGetUpdates() error {
 				}
 				continue
 			}
-			if len(xmlfeed.Entries) > 0 {
-				err := XmlFeedEntryTgSend(xmlfeed, xmlfeed.Entries[len(xmlfeed.Entries)-1])
+			if len(atomfeed.Entries) > 0 {
+				err := AtomFeedEntryTgSend(atomfeed, atomfeed.Entries[len(atomfeed.Entries)-1])
 				if err != nil {
-					tglog("XmlFeedEntryTgSend [%s] %v", mtfu, err)
+					tglog("AtomFeedEntryTgSend [%s] %v", mtfu, err)
 					continue
 				}
 			}
@@ -375,27 +375,27 @@ func main() {
 	}
 }
 
-type XmlFeed struct {
-	Updated XmlTime        `xml:"updated"`
-	Title   string         `xml:"title"`
-	Entries []XmlFeedEntry `xml:"entry"`
+type AtomFeed struct {
+	Updated AtomTime        `xml:"updated"`
+	Title   string          `xml:"title"`
+	Entries []AtomFeedEntry `xml:"entry"`
 }
 
-type XmlFeedEntry struct {
-	Updated XmlTime          `xml:"updated"`
-	Title   string           `xml:"title"`
-	Link    XmlFeedEntryLink `xml:"link"`
+type AtomFeedEntry struct {
+	Updated AtomTime          `xml:"updated"`
+	Title   string            `xml:"title"`
+	Link    AtomFeedEntryLink `xml:"link"`
 }
 
-type XmlFeedEntryLink struct {
+type AtomFeedEntryLink struct {
 	Href string `xml:"href,attr"`
 }
 
-type XmlTime struct {
+type AtomTime struct {
 	time.Time
 }
 
-func (t *XmlTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (t *AtomTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var v string
 	if err := d.DecodeElement(&v, &start); err != nil {
 		return err
@@ -428,7 +428,7 @@ func AllFeedsTgSend() error {
 	return nil
 }
 
-func FeedGet(feedurl string) (xmlfeed *XmlFeed, err error) {
+func FeedGet(feedurl string) (atomfeed *AtomFeed, err error) {
 	perr("DEBUG FeedGet url [%s]", feedurl)
 
 	resp, err := http.Get(feedurl)
@@ -440,33 +440,33 @@ func FeedGet(feedurl string) (xmlfeed *XmlFeed, err error) {
 	decoder := xml.NewDecoder(resp.Body)
 	decoder.DefaultSpace = Config.XmlDefaultSpace
 
-	err = decoder.Decode(&xmlfeed)
+	err = decoder.Decode(&atomfeed)
 	if err != nil {
 		return nil, fmt.Errorf("xml decode %v", err)
 	}
-	if xmlfeed.Updated.IsZero() && xmlfeed.Title == "" {
-		return nil, fmt.Errorf("feed title and time are empty")
+	if atomfeed.Updated.IsZero() && atomfeed.Title == "" {
+		return nil, fmt.Errorf("atom feed title and time are empty")
 	}
 
-	xmlfeed.Title = strings.TrimSpace(xmlfeed.Title)
-	for i := range xmlfeed.Entries {
-		xmlfeed.Entries[i].Title = strings.TrimSpace(xmlfeed.Entries[i].Title)
+	atomfeed.Title = strings.TrimSpace(atomfeed.Title)
+	for i := range atomfeed.Entries {
+		atomfeed.Entries[i].Title = strings.TrimSpace(atomfeed.Entries[i].Title)
 	}
 
-	sort.Slice(xmlfeed.Entries, func(i, j int) bool {
-		return xmlfeed.Entries[i].Updated.Time.Before(xmlfeed.Entries[j].Updated.Time)
+	sort.Slice(atomfeed.Entries, func(i, j int) bool {
+		return atomfeed.Entries[i].Updated.Time.Before(atomfeed.Entries[j].Updated.Time)
 	})
 
-	return xmlfeed, nil
+	return atomfeed, nil
 }
 
-func XmlFeedEntryTgSend(xmlfeed *XmlFeed, xmlfeedentry XmlFeedEntry) error {
+func AtomFeedEntryTgSend(atomfeed *AtomFeed, atomfeedentry AtomFeedEntry) error {
 	tgmsg := tg.Bold(tg.Link(
-		fmt.Sprintf("%s • %s", xmlfeed.Title, xmlfeedentry.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
-		xmlfeedentry.Link.Href,
+		fmt.Sprintf("%s • %s", atomfeed.Title, atomfeedentry.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
+		atomfeedentry.Link.Href,
 	)) + NL +
-		tg.Esc(xmlfeedentry.Title)
-	perr("DEBUG XmlFeedEntryTgSend tgmsg [%s]", tgmsg)
+		tg.Esc(atomfeedentry.Title)
+	perr("DEBUG AtomFeedEntryTgSend tgmsg [%s]", tgmsg)
 
 	if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 		ChatId:             Config.TgChatId,
@@ -480,21 +480,21 @@ func XmlFeedEntryTgSend(xmlfeed *XmlFeed, xmlfeedentry XmlFeedEntry) error {
 }
 
 func FeedAllEntriesTgSend(f Feed) error {
-	xmlfeed, err := FeedGet(f.Url)
+	atomfeed, err := FeedGet(f.Url)
 	if err != nil {
 		return err
 	}
 
-	for _, xmlfeedentry := range xmlfeed.Entries {
-		perr("DEBUG FeedAllEntriesTgSend url [%s] title [%s] updated <%s> link [%s]", f.Url, xmlfeedentry.Title, xmlfeedentry.Updated.Time, xmlfeedentry.Link.Href)
+	for _, atomfeedentry := range atomfeed.Entries {
+		perr("DEBUG FeedAllEntriesTgSend url [%s] title [%s] updated <%s> link [%s]", f.Url, atomfeedentry.Title, atomfeedentry.Updated.Time, atomfeedentry.Link.Href)
 
-		if xmlfeedentry.Updated.Time.Before(f.CheckLast) {
+		if atomfeedentry.Updated.Time.Before(f.CheckLast) {
 			continue
 		}
 
-		err := XmlFeedEntryTgSend(xmlfeed, xmlfeedentry)
+		err := AtomFeedEntryTgSend(atomfeed, atomfeedentry)
 		if err != nil {
-			return err
+			return fmt.Errorf("AtomFeedEntryTgSend [%s] %w", f.Url, err)
 		}
 
 		time.Sleep(Config.TgSendInterval)

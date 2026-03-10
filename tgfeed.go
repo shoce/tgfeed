@@ -1,4 +1,4 @@
-// GoGet GoFmt GoBuildNull GoBuild
+// GoGet GoFmt GoBuildNull
 
 package main
 
@@ -339,6 +339,8 @@ func init() {
 }
 
 func main() {
+	var err error
+
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
 	go func(sigterm chan os.Signal) {
@@ -350,16 +352,14 @@ func main() {
 	for {
 		t0 := time.Now()
 
-		if err := ConfigGet(); err != nil {
-			perr("ERROR ConfigGet %v", err)
+		if err = ConfigGet(); err != nil {
+			tglog("ERROR ConfigGet %v", err)
 			os.Exit(1)
 		}
 
-		if err := TgGetUpdates(); err != nil {
-			perr("ERROR TgGetUpdates %v", err)
-		}
-
-		if err := AllFeedsTgSend(); err != nil {
+		if err = TgGetUpdates(); err != nil {
+			tglog("ERROR TgGetUpdates %v", err)
+		} else if err = AllFeedsTgSend(); err != nil {
 			tglog("ERROR AllFeedsTgSend %v", err)
 		}
 
@@ -410,7 +410,7 @@ func AllFeedsTgSend() error {
 	for _, feedurl := range Config.FeedsUrls {
 		err := FeedAllEntriesTgSend(feedurl)
 		if err != nil {
-			perr("ERROR FeedCheck [%s] %v", feedurl, err)
+			tglog("FeedCheck [%s] %v", feedurl, err)
 		}
 	}
 
@@ -498,21 +498,29 @@ func FeedAllEntriesTgSend(feedurl string) error {
 func ts() string {
 	tnow := time.Now().In(time.FixedZone("IST", 330*60))
 	return fmt.Sprintf(
-		"%d%02d%02d:%02d%02dॐ",
+		"<%03d:%02d%02d:%02d%02d%02dॐ>",
 		tnow.Year()%1000, tnow.Month(), tnow.Day(),
-		tnow.Hour(), tnow.Minute(),
+		tnow.Hour(), tnow.Minute(), tnow.Second(),
 	)
 }
 
 func perr(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, ts()+" "+msg+NL, args...)
+	msgtext := msg
+	if len(args) > 0 {
+		msgtext = tg.F(msg, args...)
+	}
+	fmt.Fprint(os.Stderr, ts()+SP+msgtext+NL)
 }
 
 func tglog(msg string, args ...interface{}) (err error) {
-	perr(msg, args...)
+	msgtext := msg
+	if len(args) > 0 {
+		msgtext = tg.F(msg, args...)
+	}
+	perr(msgtext)
 	_, err = tg.SendMessage(tg.SendMessageRequest{
 		ChatId: Config.TgBossChatId,
-		Text:   tg.Esc(tg.F(msg, args...)),
+		Text:   tg.Esc(msgtext),
 
 		DisableNotification: true,
 		LinkPreviewOptions:  tg.LinkPreviewOptions{IsDisabled: true},

@@ -16,7 +16,8 @@ import (
 	"syscall"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	// https://pkg.go.dev/github.com/goccy/go-yaml
+	yaml "github.com/goccy/go-yaml"
 
 	"github.com/shoce/tg"
 )

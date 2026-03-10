@@ -82,41 +82,31 @@ func ConfigGet() error {
 		perr("DEBUG <true>")
 	}
 
-	if Config.DEBUG {
-		perr("Interval <%v>", Config.Interval)
-	}
+	perr("DEBUG Interval <%v>", Config.Interval)
 	if Config.Interval == 0 {
 		Config.Interval = IntervalDefault
 		perr("Interval <%v>", Config.Interval)
 	}
 
-	if Config.DEBUG {
-		perr("TgApiUrl [%s]", Config.TgApiUrl)
-	}
+	perr("DEBUG TgApiUrl [%s]", Config.TgApiUrl)
 	if Config.TgApiUrl == "" {
 		Config.TgApiUrl = TgApiUrlDefault
 		perr("TgApiUrl [%s]", Config.TgApiUrl)
 	}
 
-	if Config.DEBUG {
-		perr("XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
-	}
+	perr("DEBUG XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
 	if Config.XmlDefaultSpace == "" {
 		Config.XmlDefaultSpace = XmlDefaultSpaceDefault
 		perr("XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
 	}
 
-	if Config.DEBUG {
-		perr("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
-	}
+	perr("DEBUG TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
 	if Config.TgGetUpdatesInterval == 0 {
 		Config.TgGetUpdatesInterval = TgGetUpdatesIntervalDefault
 		perr("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
 	}
 
-	if Config.DEBUG {
-		perr("TgSendInterval <%v>", Config.TgSendInterval)
-	}
+	perr("DEBUG TgSendInterval <%v>", Config.TgSendInterval)
 	if Config.TgSendInterval == 0 {
 		Config.TgSendInterval = TgSendIntervalDefault
 		perr("TgSendInterval <%v>", Config.TgSendInterval)
@@ -136,24 +126,16 @@ func ConfigGet() error {
 		return fmt.Errorf("TgChatId empty")
 	}
 
-	if Config.DEBUG {
-		perr("TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
-	}
+	perr("DEBUG TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
 
-	if Config.DEBUG {
-		perr("FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
-	}
+	perr("DEBUG FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
 	if Config.FeedsCheckInterval == 0 {
 		Config.FeedsCheckInterval = FeedsCheckIntervalDefault
 		perr("FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
 	}
 
-	if Config.DEBUG {
-		perr("FeedsCheckLast <%v>", Config.FeedsCheckLast)
-	}
-	if Config.DEBUG {
-		perr("FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, SP))
-	}
+	perr("DEBUG FeedsCheckLast <%v>", Config.FeedsCheckLast)
+	perr("DEBUG FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, SP))
 
 	return nil
 }
@@ -423,9 +405,7 @@ func AllFeedsTgSend() error {
 }
 
 func FeedGet(feedurl string) (feed *Feed, err error) {
-	if Config.DEBUG {
-		perr("DEBUG url [%s]", feedurl)
-	}
+	perr("DEBUG url [%s]", feedurl)
 
 	resp, err := http.Get(feedurl)
 	if err != nil {
@@ -454,9 +434,7 @@ func FeedEntryTgSend(feed *Feed, entry FeedEntry) error {
 	)) + NL +
 		tg.Esc(strings.TrimSpace(entry.Title))
 
-	if Config.DEBUG {
-		perr("DEBUG tgmsg [%s]", tgmsg)
-	}
+	perr("DEBUG tgmsg [%s]", tgmsg)
 
 	if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 		ChatId:             Config.TgChatId,
@@ -476,9 +454,7 @@ func FeedAllEntriesTgSend(feedurl string) error {
 	}
 
 	for _, feedentry := range feed.Entries {
-		if Config.DEBUG {
-			perr("DEBUG url [%s] title [%s] updated <%s> link [%s]", feedurl, feedentry.Title, feedentry.Updated.Time, feedentry.Link.Href)
-		}
+		perr("DEBUG url [%s] title [%s] updated <%s> link [%s]", feedurl, feedentry.Title, feedentry.Updated.Time, feedentry.Link.Href)
 
 		if feedentry.Updated.Time.Before(Config.FeedsCheckLast) {
 			continue
@@ -505,6 +481,9 @@ func ts() string {
 }
 
 func perr(msg string, args ...interface{}) {
+	if strings.HasPrefix(msg, "DEBUG ") && !Config.DEBUG {
+		return
+	}
 	msgtext := msg
 	if len(args) > 0 {
 		msgtext = tg.F(msg, args...)
@@ -551,17 +530,13 @@ func (config *TgFeedConfig) Get() error {
 		return err
 	}
 
-	if Config.DEBUG {
-		//perr("DEBUG Config.Get %+v", config)
-	}
+	//perr("DEBUG Config.Get %+v", config)
 
 	return nil
 }
 
 func (config *TgFeedConfig) Put() error {
-	if config.DEBUG {
-		//perr("DEBUG Config.Put %s %+v", config.YssUrl, config)
-	}
+	//perr("DEBUG Config.Put %s %+v", config.YssUrl, config)
 
 	rbb, err := yaml.Marshal(config)
 	if err != nil {

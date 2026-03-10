@@ -44,20 +44,14 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.VERSION }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: tag
-        run: |
-          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
-          git config user.name github-actions
-          git config user.email "github-actions@users.noreply.github.com"
-          git tag $VERSION
-          git push origin $VERSION
+      - uses: shoce/action-git-tag@v1
 
       - uses: actions/delete-package-versions@v5
         with:

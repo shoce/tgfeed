@@ -2,7 +2,7 @@
 ARG APPNAME=tgfeed
 
 # https://hub.docker.com/_/golang/tags
-FROM golang:1.25-alpine AS build
+FROM golang:1-alpine AS build
 ARG APPNAME
 ENV APPNAME=$APPNAME
 ENV CGO_ENABLED=0

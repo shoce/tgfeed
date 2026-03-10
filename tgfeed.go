@@ -154,7 +154,7 @@ func ConfigGet() error {
 		perr("FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
 	}
 
-	perr("DEBUG FeedsCheckLast <%v>", Config.FeedsCheckLast)
+	perr("DEBUG FeedsCheckLast <%v>", fmttime(Config.FeedsCheckLast))
 	feedsurls := make([]string, len(Config.Feeds))
 	for i := range Config.Feeds {
 		feedsurls[i] = "[" + Config.Feeds[i].Url + "]"
@@ -498,16 +498,19 @@ func FeedAllEntriesTgSend(f Feed) error {
 	return nil
 }
 
+func fmttime(t time.Time) string {
+	return fmt.Sprintf(
+		"<%03d:%02d%02d:%02d%02d%02dॐ>",
+		t.Year()%1000, t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second(),
+	)
+}
+
 func perr(msg string, args ...interface{}) {
 	if strings.HasPrefix(msg, "DEBUG ") && !Config.DEBUG {
 		return
 	}
-	tnow := time.Now().In(time.FixedZone("IST", 330*60))
-	ts := fmt.Sprintf(
-		"<%03d:%02d%02d:%02d%02d%02dॐ>",
-		tnow.Year()%1000, tnow.Month(), tnow.Day(),
-		tnow.Hour(), tnow.Minute(), tnow.Second(),
-	)
+	ts := fmttime(time.Now().In(TZIST))
 	msgtext := msg
 	if len(args) > 0 {
 		msgtext = tg.F(msg, args...)

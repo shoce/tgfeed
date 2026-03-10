@@ -147,7 +147,7 @@ func TgGetUpdates() error {
 
 	uu, _, err := tg.GetUpdates(Config.TgUpdatesOffset + 1)
 	if err != nil {
-		perr("ERROR tg.GetUpdates %v", err)
+		return fmt.Errorf("tg.GetUpdates %v", err)
 	}
 	Config.TgGetUpdatesLast = time.Now()
 
@@ -296,8 +296,7 @@ func TgGetUpdates() error {
 	}
 
 	if err := Config.Put(); err != nil {
-		perr("ERROR Config.Put %v", err)
-		return err
+		return fmt.Errorf("Config.Put %v", err)
 	}
 
 	return nil

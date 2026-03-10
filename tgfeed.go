@@ -440,8 +440,12 @@ func FeedGet(feedurl string) (xmlfeed *XmlFeed, err error) {
 	decoder := xml.NewDecoder(resp.Body)
 	decoder.DefaultSpace = Config.XmlDefaultSpace
 
-	if err := decoder.Decode(&xmlfeed); err != nil {
+	err = decoder.Decode(&xmlfeed)
+	if err != nil {
 		return nil, fmt.Errorf("xml decode %v", err)
+	}
+	if xmlfeed.Updated.IsZero() && xmlfeed.Title == "" {
+		return nil, fmt.Errorf("feed title and time are empty")
 	}
 
 	xmlfeed.Title = strings.TrimSpace(xmlfeed.Title)

@@ -428,7 +428,7 @@ func AllFeedsTgSend() error {
 }
 
 func FeedGet(feedurl string) (xmlfeed *XmlFeed, err error) {
-	perr("DEBUG url [%s]", feedurl)
+	perr("DEBUG FeedGet url [%s]", feedurl)
 
 	resp, err := http.Get(feedurl)
 	if err != nil {
@@ -443,6 +443,11 @@ func FeedGet(feedurl string) (xmlfeed *XmlFeed, err error) {
 		return nil, fmt.Errorf("xml decode %v", err)
 	}
 
+	xmlfeed.Title = strings.TrimSpace(xmlfeed.Title)
+	for i := range xmlfeed.Entries {
+		xmlfeed.Entries[i].Title = strings.TrimSpace(xmlfeed.Entries[i].Title)
+	}
+
 	sort.Slice(xmlfeed.Entries, func(i, j int) bool {
 		return xmlfeed.Entries[i].Updated.Time.Before(xmlfeed.Entries[j].Updated.Time)
 	})
@@ -455,9 +460,8 @@ func XmlFeedEntryTgSend(xmlfeed *XmlFeed, xmlfeedentry XmlFeedEntry) error {
 		fmt.Sprintf("%s • %s", xmlfeed.Title, xmlfeedentry.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
 		xmlfeedentry.Link.Href,
 	)) + NL +
-		tg.Esc(strings.TrimSpace(xmlfeedentry.Title))
-
-	perr("DEBUG tgmsg [%s]", tgmsg)
+		tg.Esc(xmlfeedentry.Title)
+	perr("DEBUG XmlFeedEntryTgSend tgmsg [%s]", tgmsg)
 
 	if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 		ChatId:             Config.TgChatId,
@@ -477,7 +481,7 @@ func FeedAllEntriesTgSend(f Feed) error {
 	}
 
 	for _, xmlfeedentry := range xmlfeed.Entries {
-		perr("DEBUG url [%s] title [%s] updated <%s> link [%s]", f.Url, xmlfeedentry.Title, xmlfeedentry.Updated.Time, xmlfeedentry.Link.Href)
+		perr("DEBUG FeedAllEntriesTgSend url [%s] title [%s] updated <%s> link [%s]", f.Url, xmlfeedentry.Title, xmlfeedentry.Updated.Time, xmlfeedentry.Link.Href)
 
 		if xmlfeedentry.Updated.Time.Before(f.CheckLast) {
 			continue

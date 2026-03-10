@@ -36,7 +36,14 @@ const (
 	TgGetUpdatesIntervalDefault = 59 * time.Second
 	TgSendIntervalDefault       = 3 * time.Second
 	FeedsCheckIntervalDefault   = 11 * time.Minute
+
+	FeedCheckLastAgoDefault = 240 * time.Hour
 )
+
+type Feed struct {
+	Url       string    `yaml:"Url"`
+	CheckLast time.Time `yaml:"CheckLast"`
+}
 
 type TgFeedConfig struct {
 	YssUrl string `yaml:"-"`
@@ -65,6 +72,7 @@ type TgFeedConfig struct {
 
 	FeedsUrls []string `yaml:"FeedsUrls"`
 	// ( [https://github.com/golang/go/releases.atom] )
+	Feeds []Feed `yaml:"Feeds"`
 }
 
 var (
@@ -151,6 +159,12 @@ func ConfigGet() error {
 	perr("DEBUG FeedsCheckLast <%v>", Config.FeedsCheckLast)
 	perr("DEBUG FeedsUrls ( %s )", strings.Join(Config.FeedsUrls, SP))
 
+	if len(Config.Feeds) == 0 {
+		for _, fu := range Config.FeedsUrls {
+			Config.Feeds = append(Config.Feeds, Feed{Url: fu, CheckLast: Config.FeedsCheckLast.Add(-FeedCheckLastAgoDefault)})
+		}
+	}
+
 	return nil
 }
 
@@ -205,7 +219,7 @@ func TgGetUpdates() error {
 			mtfu := mtff[len(mtff)-1]
 			perr("ADD feed [%s]", mtfu)
 
-			feed, err := FeedGet(mtfu)
+			xmlfeed, err := FeedGet(mtfu)
 			if err != nil {
 				perr("FeedGet [%s] %v", mtfu, err)
 				tgmsg := tg.Esc(tg.F("FeedGet %v", err))
@@ -219,26 +233,25 @@ func TgGetUpdates() error {
 				}
 				continue
 			}
-			if len(feed.Entries) > 0 {
-				err := FeedEntryTgSend(feed, feed.Entries[len(feed.Entries)-1])
+			if len(xmlfeed.Entries) > 0 {
+				err := XmlFeedEntryTgSend(xmlfeed, xmlfeed.Entries[len(xmlfeed.Entries)-1])
 				if err != nil {
-					perr("FeedEntryTgSend [%s] %v", mtfu, err)
+					tglog("XmlFeedEntryTgSend [%s] %v", mtfu, err)
 					continue
 				}
 			}
 
 			Config.FeedsUrls = append(Config.FeedsUrls, mtfu)
 
-			FeedsUrlsMap := make(map[string]struct{}, len(Config.FeedsUrls))
-			FeedsUrlsUniq := make([]string, 0, len(Config.FeedsUrls))
-			for _, v := range Config.FeedsUrls {
-				if _, ok := FeedsUrlsMap[v]; ok {
-					continue
+			add := true
+			for _, f := range Config.Feeds {
+				if f.Url == mtfu {
+					add = false
 				}
-				FeedsUrlsMap[v] = struct{}{}
-				FeedsUrlsUniq = append(FeedsUrlsUniq, v)
 			}
-			Config.FeedsUrls = FeedsUrlsUniq
+			if add {
+				Config.Feeds = append(Config.Feeds, Feed{Url: mtfu, CheckLast: time.Now().Add(-FeedCheckLastAgoDefault)})
+			}
 
 			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
 				ChatId:    fmt.Sprintf("%d", m.Chat.Id),
@@ -250,16 +263,19 @@ func TgGetUpdates() error {
 
 		} else if len(mtff) == 2 && mtff[0] == Config.TgCmdRemove && strings.HasPrefix(mtff[1], "https://") {
 
-			perr("REMOVE feed [%s]", mtff[1])
+			mtfu := mtff[len(mtff)-1]
+			perr("REMOVE feed [%s]", mtfu)
 
-			FeedsUrlsNew := make([]string, 0, len(Config.FeedsUrls))
-			for _, v := range Config.FeedsUrls {
-				if v == mtff[1] {
+			FeedsNew := make([]Feed, 0, len(Config.Feeds))
+			for _, f := range Config.Feeds {
+				if f.Url == mtfu {
 					continue
 				}
-				FeedsUrlsNew = append(FeedsUrlsNew, v)
+				FeedsNew = append(FeedsNew, f)
 			}
-			Config.FeedsUrls = FeedsUrlsNew
+			if len(FeedsNew) != len(Config.Feeds) {
+				Config.Feeds = FeedsNew
+			}
 
 			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
 				ChatId:    fmt.Sprintf("%d", m.Chat.Id),
@@ -274,8 +290,8 @@ func TgGetUpdates() error {
 			perr("LIST feeds")
 
 			tgmsg := "(" + NL
-			for i, f := range Config.FeedsUrls {
-				tgmsg += tg.F("#<%d> [%s]", i+1, f) + NL
+			for i, f := range Config.Feeds {
+				tgmsg += tg.F("#<%d> [%s]", i+1, f.Url) + NL
 			}
 			tgmsg += ")" + NL
 			tgmsg = tg.Esc(tgmsg)
@@ -364,27 +380,27 @@ func main() {
 	}
 }
 
-type Feed struct {
-	Updated Time        `xml:"updated"`
-	Title   string      `xml:"title"`
-	Entries []FeedEntry `xml:"entry"`
+type XmlFeed struct {
+	Updated XmlTime        `xml:"updated"`
+	Title   string         `xml:"title"`
+	Entries []XmlFeedEntry `xml:"entry"`
 }
 
-type FeedEntry struct {
-	Updated Time   `xml:"updated"`
-	Title   string `xml:"title"`
-	Link    Link   `xml:"link"`
+type XmlFeedEntry struct {
+	Updated XmlTime          `xml:"updated"`
+	Title   string           `xml:"title"`
+	Link    XmlFeedEntryLink `xml:"link"`
 }
 
-type Link struct {
+type XmlFeedEntryLink struct {
 	Href string `xml:"href,attr"`
 }
 
-type Time struct {
+type XmlTime struct {
 	time.Time
 }
 
-func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (t *XmlTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var v string
 	if err := d.DecodeElement(&v, &start); err != nil {
 		return err
@@ -398,15 +414,15 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 }
 
 func AllFeedsTgSend() error {
-	if time.Since(Config.FeedsCheckLast) < Config.FeedsCheckInterval {
-		return nil
-	}
-
-	for _, feedurl := range Config.FeedsUrls {
-		err := FeedAllEntriesTgSend(feedurl)
-		if err != nil {
-			return fmt.Errorf("FeedCheck [%s] %v", feedurl, err)
+	for fi := range Config.Feeds {
+		if time.Since(Config.Feeds[fi].CheckLast) < Config.FeedsCheckInterval {
+			continue
 		}
+		err := FeedAllEntriesTgSend(Config.Feeds[fi])
+		if err != nil {
+			return fmt.Errorf("FeedCheck [%s] %v", Config.Feeds[fi].Url, err)
+		}
+		Config.Feeds[fi].CheckLast = time.Now()
 	}
 
 	Config.FeedsCheckLast = time.Now()
@@ -417,7 +433,7 @@ func AllFeedsTgSend() error {
 	return nil
 }
 
-func FeedGet(feedurl string) (feed *Feed, err error) {
+func FeedGet(feedurl string) (xmlfeed *XmlFeed, err error) {
 	perr("DEBUG url [%s]", feedurl)
 
 	resp, err := http.Get(feedurl)
@@ -429,23 +445,23 @@ func FeedGet(feedurl string) (feed *Feed, err error) {
 	decoder := xml.NewDecoder(resp.Body)
 	decoder.DefaultSpace = Config.XmlDefaultSpace
 
-	if err := decoder.Decode(&feed); err != nil {
+	if err := decoder.Decode(&xmlfeed); err != nil {
 		return nil, fmt.Errorf("xml decode %v", err)
 	}
 
-	sort.Slice(feed.Entries, func(i, j int) bool {
-		return feed.Entries[i].Updated.Time.Before(feed.Entries[j].Updated.Time)
+	sort.Slice(xmlfeed.Entries, func(i, j int) bool {
+		return xmlfeed.Entries[i].Updated.Time.Before(xmlfeed.Entries[j].Updated.Time)
 	})
 
-	return feed, nil
+	return xmlfeed, nil
 }
 
-func FeedEntryTgSend(feed *Feed, entry FeedEntry) error {
+func XmlFeedEntryTgSend(xmlfeed *XmlFeed, xmlfeedentry XmlFeedEntry) error {
 	tgmsg := tg.Bold(tg.Link(
-		fmt.Sprintf("%s • %s", feed.Title, entry.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
-		entry.Link.Href,
+		fmt.Sprintf("%s • %s", xmlfeed.Title, xmlfeedentry.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
+		xmlfeedentry.Link.Href,
 	)) + NL +
-		tg.Esc(strings.TrimSpace(entry.Title))
+		tg.Esc(strings.TrimSpace(xmlfeedentry.Title))
 
 	perr("DEBUG tgmsg [%s]", tgmsg)
 
@@ -460,20 +476,20 @@ func FeedEntryTgSend(feed *Feed, entry FeedEntry) error {
 	return nil
 }
 
-func FeedAllEntriesTgSend(feedurl string) error {
-	feed, err := FeedGet(feedurl)
+func FeedAllEntriesTgSend(f Feed) error {
+	xmlfeed, err := FeedGet(f.Url)
 	if err != nil {
 		return err
 	}
 
-	for _, feedentry := range feed.Entries {
-		perr("DEBUG url [%s] title [%s] updated <%s> link [%s]", feedurl, feedentry.Title, feedentry.Updated.Time, feedentry.Link.Href)
+	for _, xmlfeedentry := range xmlfeed.Entries {
+		perr("DEBUG url [%s] title [%s] updated <%s> link [%s]", f.Url, xmlfeedentry.Title, xmlfeedentry.Updated.Time, xmlfeedentry.Link.Href)
 
-		if feedentry.Updated.Time.Before(Config.FeedsCheckLast) {
+		if xmlfeedentry.Updated.Time.Before(f.CheckLast) {
 			continue
 		}
 
-		err := FeedEntryTgSend(feed, feedentry)
+		err := XmlFeedEntryTgSend(xmlfeed, xmlfeedentry)
 		if err != nil {
 			return err
 		}
@@ -484,24 +500,21 @@ func FeedAllEntriesTgSend(feedurl string) error {
 	return nil
 }
 
-func ts() string {
-	tnow := time.Now().In(time.FixedZone("IST", 330*60))
-	return fmt.Sprintf(
-		"<%03d:%02d%02d:%02d%02d%02dॐ>",
-		tnow.Year()%1000, tnow.Month(), tnow.Day(),
-		tnow.Hour(), tnow.Minute(), tnow.Second(),
-	)
-}
-
 func perr(msg string, args ...interface{}) {
 	if strings.HasPrefix(msg, "DEBUG ") && !Config.DEBUG {
 		return
 	}
+	tnow := time.Now().In(time.FixedZone("IST", 330*60))
+	ts := fmt.Sprintf(
+		"<%03d:%02d%02d:%02d%02d%02dॐ>",
+		tnow.Year()%1000, tnow.Month(), tnow.Day(),
+		tnow.Hour(), tnow.Minute(), tnow.Second(),
+	)
 	msgtext := msg
 	if len(args) > 0 {
 		msgtext = tg.F(msg, args...)
 	}
-	fmt.Fprint(os.Stderr, ts()+SP+msgtext+NL)
+	fmt.Fprint(os.Stderr, ts+SP+msgtext+NL)
 }
 
 func tglog(msg string, args ...interface{}) (err error) {

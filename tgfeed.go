@@ -566,7 +566,7 @@ func (config *TgFeedConfig) Get() error {
 func (config *TgFeedConfig) Put() error {
 	//perr("DEBUG Config.Put %s %+v", config.YssUrl, config)
 
-	rbb, err := yaml.Marshal(config)
+	rbb, err := yaml.MarshalWithOptions(config, yaml.JSON(), yaml.Flow(false))
 	if err != nil {
 		return err
 	}

@@ -216,7 +216,7 @@ func TgGetUpdates() error {
 			mtfu := mtff[len(mtff)-1]
 			perr("ADD feed [%s]", mtfu)
 
-			atomfeed, err := FeedGet(mtfu)
+			atomfeed, err := FeedGet(Feed{Url: mtfu})
 			if err != nil {
 				perr("FeedGet [%s] %v", mtfu, err)
 				tgmsg := tg.Esc(tg.F("FeedGet %v", err))
@@ -365,8 +365,8 @@ func main() {
 
 		if err = TgGetUpdates(); err != nil {
 			tglog("ERROR TgGetUpdates %v", err)
-		} else if err = AllFeedsTgSend(); err != nil {
-			tglog("ERROR AllFeedsTgSend %v", err)
+		} else if err = FeedsTgSend(); err != nil {
+			tglog("ERROR FeedsTgSend %v", err)
 		}
 
 		if dur := time.Now().Sub(t0); dur < Config.Interval {
@@ -408,39 +408,44 @@ func (t *AtomTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return nil
 }
 
-func AllFeedsTgSend() error {
+func FeedsTgSend() (err error) {
 	for fi := range Config.Feeds {
 		if time.Since(Config.Feeds[fi].CheckLast) < Config.FeedsCheckInterval {
 			continue
 		}
-		err := FeedAllEntriesTgSend(Config.Feeds[fi])
+		err = FeedEntriesTgSend(Config.Feeds[fi])
 		if err != nil {
-			return fmt.Errorf("FeedCheck [%s] %v", Config.Feeds[fi].Url, err)
+			tglog("FeedEntriesTgSend [%s] %v", Config.Feeds[fi].Url, err)
+			continue
 		}
 		Config.Feeds[fi].CheckLast = time.Now()
+		if err := Config.Put(); err != nil {
+			tglog("FeedsTgSend [%s] Config.Put %v", Config.Feeds[fi].Url, err)
+			continue
+		}
 	}
 
 	Config.FeedsCheckLast = time.Now()
 	if err := Config.Put(); err != nil {
-		return fmt.Errorf("Config.Put %v", err)
+		return fmt.Errorf("FeedsTgSend Config.Put %v", err)
 	}
 
 	return nil
 }
 
-func FeedGet(feedurl string) (atomfeed *AtomFeed, err error) {
-	perr("DEBUG FeedGet url [%s]", feedurl)
+func FeedGet(f Feed) (atomfeed *AtomFeed, err error) {
+	perr("DEBUG FeedGet url [%s]", f.Url)
 
-	resp, err := http.Get(feedurl)
+	resp, err := http.Get(f.Url)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	decoder := xml.NewDecoder(resp.Body)
-	decoder.DefaultSpace = Config.XmlDefaultSpace
+	xmldecoder := xml.NewDecoder(resp.Body)
+	xmldecoder.DefaultSpace = Config.XmlDefaultSpace
 
-	err = decoder.Decode(&atomfeed)
+	err = xmldecoder.Decode(&atomfeed)
 	if err != nil {
 		return nil, fmt.Errorf("xml decode %v", err)
 	}
@@ -479,8 +484,8 @@ func AtomFeedEntryTgSend(atomfeed *AtomFeed, atomfeedentry AtomFeedEntry) error 
 	return nil
 }
 
-func FeedAllEntriesTgSend(f Feed) error {
-	atomfeed, err := FeedGet(f.Url)
+func FeedEntriesTgSend(f Feed) (err error) {
+	atomfeed, err := FeedGet(f)
 	if err != nil {
 		return err
 	}
@@ -492,7 +497,7 @@ func FeedAllEntriesTgSend(f Feed) error {
 			continue
 		}
 
-		err := AtomFeedEntryTgSend(atomfeed, atomfeedentry)
+		err = AtomFeedEntryTgSend(atomfeed, atomfeedentry)
 		if err != nil {
 			return fmt.Errorf("AtomFeedEntryTgSend [%s] %w", f.Url, err)
 		}

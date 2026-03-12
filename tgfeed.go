@@ -214,11 +214,11 @@ func TgGetUpdates() error {
 		if (len(mtff) == 2 && mtff[0] == Config.TgCmdAdd && strings.HasPrefix(mtff[1], "https://")) || (len(mtff) == 1 && strings.HasPrefix(mtff[0], "https://")) {
 
 			mtfu := mtff[len(mtff)-1]
-			perr("ADD feed [%s]", mtfu)
+			perr("CmdAdd [%s]", mtfu)
 
 			atomfeed, err := FeedGet(Feed{Url: mtfu})
 			if err != nil {
-				perr("FeedGet [%s] %v", mtfu, err)
+				perr("CmdAdd FeedGet [%s] %v", mtfu, err)
 				tgmsg := tg.Esc(tg.F("FeedGet %v", err))
 				if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 					ChatId:             fmt.Sprintf("%d", m.Chat.Id),
@@ -259,7 +259,7 @@ func TgGetUpdates() error {
 		} else if len(mtff) == 2 && mtff[0] == Config.TgCmdRemove && strings.HasPrefix(mtff[1], "https://") {
 
 			mtfu := mtff[len(mtff)-1]
-			perr("REMOVE feed [%s]", mtfu)
+			perr("CmdRemove [%s]", mtfu)
 
 			FeedsNew := make([]Feed, 0, len(Config.Feeds))
 			for _, f := range Config.Feeds {
@@ -282,7 +282,7 @@ func TgGetUpdates() error {
 
 		} else if len(mtff) == 1 && mtff[0] == Config.TgCmdList {
 
-			perr("LIST feeds")
+			perr("CmdList")
 
 			tgmsg := "(" + NL
 			for i, f := range Config.Feeds {
@@ -444,6 +444,7 @@ func FeedGet(f Feed) (atomfeed *AtomFeed, err error) {
 
 	xmldecoder := xml.NewDecoder(resp.Body)
 	xmldecoder.DefaultSpace = Config.XmlDefaultSpace
+	xmldecoder.Entity = xml.HTMLEntity
 
 	err = xmldecoder.Decode(&atomfeed)
 	if err != nil {
@@ -491,7 +492,7 @@ func FeedEntriesTgSend(f Feed) (err error) {
 	}
 
 	for _, atomfeedentry := range atomfeed.Entries {
-		perr("DEBUG FeedAllEntriesTgSend url [%s] title [%s] updated <%s> link [%s]", f.Url, atomfeedentry.Title, atomfeedentry.Updated.Time, atomfeedentry.Link.Href)
+		perr("DEBUG FeedEntriesTgSend url [%s] title [%s] updated <%s> link [%s]", f.Url, atomfeedentry.Title, atomfeedentry.Updated.Time, atomfeedentry.Link.Href)
 
 		if atomfeedentry.Updated.Time.Before(f.CheckLast) {
 			continue
@@ -529,11 +530,11 @@ func perr(msg string, args ...interface{}) {
 }
 
 func tglog(msg string, args ...interface{}) (err error) {
+	perr(msg, args...)
 	msgtext := msg
 	if len(args) > 0 {
 		msgtext = tg.F(msg, args...)
 	}
-	perr(msgtext)
 	_, err = tg.SendMessage(tg.SendMessageRequest{
 		ChatId: Config.TgBossChatId,
 		Text:   tg.Esc(msgtext),

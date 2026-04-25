@@ -19,7 +19,7 @@ import (
 	// https://pkg.go.dev/github.com/goccy/go-yaml
 	yaml "github.com/goccy/go-yaml"
 
-	"github.com/shoce/tg"
+	tg "github.com/shoce/tg"
 )
 
 const (
@@ -395,17 +395,22 @@ type AtomTime struct {
 	time.Time
 }
 
-func (t *AtomTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (t *AtomTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
 	var v string
 	if err := d.DecodeElement(&v, &start); err != nil {
 		return err
 	}
-	parsed, err := time.Parse(time.RFC3339, v)
-	if err != nil {
-		return err
+	tff := []string{
+		"2006-01-02T15:04:05Z07:00", // time.RFC3339
+		"2006-01-02 15:04:05 MST",
 	}
-	t.Time = parsed
-	return nil
+	for _, tf := range tff {
+		t.Time, err = time.Parse(tf, v)
+		if err == nil {
+			return nil
+		}
+	}
+	return err
 }
 
 func FeedsTgSend() (err error) {

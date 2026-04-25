@@ -447,6 +447,10 @@ func FeedGet(f Feed) (atomfeed *AtomFeed, err error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("http response status code <%d>", resp.StatusCode)
+	}
+
 	xmldecoder := xml.NewDecoder(resp.Body)
 	xmldecoder.DefaultSpace = Config.XmlDefaultSpace
 	xmldecoder.Entity = xml.HTMLEntity

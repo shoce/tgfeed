@@ -403,6 +403,7 @@ func (t *AtomTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err err
 	tff := []string{
 		"2006-01-02T15:04:05Z07:00", // time.RFC3339
 		"2006-01-02 15:04:05 MST",
+		"2006-01-02 15:04:05 -0700",
 	}
 	for _, tf := range tff {
 		t.Time, err = time.Parse(tf, v)

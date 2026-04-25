@@ -497,7 +497,7 @@ func AtomFeedEntryTgSend(atomfeed *AtomFeed, atomfeedentry AtomFeedEntry) error 
 func FeedEntriesTgSend(f Feed) (err error) {
 	atomfeed, err := FeedGet(f)
 	if err != nil {
-		return err
+		return fmt.Errorf("FeedGet %w", err)
 	}
 
 	for _, atomfeedentry := range atomfeed.Entries {
@@ -509,7 +509,7 @@ func FeedEntriesTgSend(f Feed) (err error) {
 
 		err = AtomFeedEntryTgSend(atomfeed, atomfeedentry)
 		if err != nil {
-			return fmt.Errorf("AtomFeedEntryTgSend [%s] %w", f.Url, err)
+			return fmt.Errorf("AtomFeedEntryTgSend %w", err)
 		}
 
 		time.Sleep(Config.TgSendInterval)

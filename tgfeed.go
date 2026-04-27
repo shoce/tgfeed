@@ -230,7 +230,7 @@ func TgGetUpdates() error {
 				}
 				continue
 			}
-			if len(atomfeed.Entries) > 0 {
+			if atomfeed != nil && len(atomfeed.Entries) > 0 {
 				err := AtomFeedEntryTgSend(atomfeed, atomfeed.Entries[len(atomfeed.Entries)-1])
 				if err != nil {
 					tglog("AtomFeedEntryTgSend [%s] %v", mtfu, err)
@@ -448,7 +448,13 @@ func FeedGet(f Feed) (atomfeed *AtomFeed, err error) {
 	}
 	defer resp.Body.Close()
 
+	// https://pkg.go.dev/http
 	if resp.StatusCode != http.StatusOK {
+		perr("http response status code <%d>", resp.StatusCode)
+		switch resp.StatusCode {
+		case http.StatusInternalServerError, http.StatusBadGateway:
+			return nil, nil
+		}
 		return nil, fmt.Errorf("http response status code <%d>", resp.StatusCode)
 	}
 
@@ -499,6 +505,9 @@ func FeedEntriesTgSend(f Feed) (err error) {
 	atomfeed, err := FeedGet(f)
 	if err != nil {
 		return fmt.Errorf("FeedGet %w", err)
+	}
+	if atomfeed == nil {
+		return nil
 	}
 
 	for _, atomfeedentry := range atomfeed.Entries {
@@ -565,7 +574,7 @@ func (config *TgFeedConfig) Get() error {
 	if err != nil {
 		return err
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("yss response status %s", resp.Status)
 	}
 
@@ -600,7 +609,7 @@ func (config *TgFeedConfig) Put() error {
 	if err != nil {
 		return err
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("yss response status %s", resp.Status)
 	}
 

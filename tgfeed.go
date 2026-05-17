@@ -77,8 +77,6 @@ type TgFeedConfig struct {
 var (
 	Config TgFeedConfig
 
-	TZIST = time.FixedZone("IST", 330*60)
-
 	Ctx context.Context
 
 	HttpClient = &http.Client{}
@@ -487,7 +485,7 @@ func FeedGet(f Feed) (atomfeed *AtomFeed, err error) {
 
 func AtomFeedEntryTgSend(atomfeed *AtomFeed, atomfeedentry AtomFeedEntry) error {
 	tgmsg := tg.Bold(tg.Link(
-		fmt.Sprintf("%s • %s", atomfeed.Title, atomfeedentry.Updated.Time.In(TZIST).Format("Jan/2 15:04")),
+		fmt.Sprintf("%s • %s", atomfeed.Title, atomfeedentry.Updated.Time.Local().Format("Jan/2 15:04")),
 		atomfeedentry.Link.Href,
 	)) + NL +
 		tg.Esc(atomfeedentry.Title)

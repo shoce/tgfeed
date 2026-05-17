@@ -82,6 +82,9 @@ var (
 	Ctx context.Context
 
 	HttpClient = &http.Client{}
+
+	F    = fmt.Sprintf
+	pout = fmt.Print
 )
 
 func ConfigGet() error {
@@ -93,34 +96,34 @@ func ConfigGet() error {
 		perr("DEBUG <true>")
 	}
 
-	perr("DEBUG Interval <%v>", Config.Interval)
+	perr(F("DEBUG Interval <%v>", Config.Interval))
 	if Config.Interval == 0 {
 		Config.Interval = IntervalDefault
-		perr("Interval <%v>", Config.Interval)
+		perr(F("Interval <%v>", Config.Interval))
 	}
 
-	perr("DEBUG TgApiUrl [%s]", Config.TgApiUrl)
+	perr(F("DEBUG TgApiUrl [%s]", Config.TgApiUrl))
 	if Config.TgApiUrl == "" {
 		Config.TgApiUrl = TgApiUrlDefault
-		perr("TgApiUrl [%s]", Config.TgApiUrl)
+		perr(F("TgApiUrl [%s]", Config.TgApiUrl))
 	}
 
-	perr("DEBUG XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
+	perr(F("DEBUG XmlDefaultSpace [%s]", Config.XmlDefaultSpace))
 	if Config.XmlDefaultSpace == "" {
 		Config.XmlDefaultSpace = XmlDefaultSpaceDefault
-		perr("XmlDefaultSpace [%s]", Config.XmlDefaultSpace)
+		perr(F("XmlDefaultSpace [%s]", Config.XmlDefaultSpace))
 	}
 
-	perr("DEBUG TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
+	perr(F("DEBUG TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval))
 	if Config.TgGetUpdatesInterval == 0 {
 		Config.TgGetUpdatesInterval = TgGetUpdatesIntervalDefault
-		perr("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval)
+		perr(F("TgGetUpdatesInterval <%v>", Config.TgGetUpdatesInterval))
 	}
 
-	perr("DEBUG TgSendInterval <%v>", Config.TgSendInterval)
+	perr(F("DEBUG TgSendInterval <%v>", Config.TgSendInterval))
 	if Config.TgSendInterval == 0 {
 		Config.TgSendInterval = TgSendIntervalDefault
-		perr("TgSendInterval <%v>", Config.TgSendInterval)
+		perr(F("TgSendInterval <%v>", Config.TgSendInterval))
 	}
 
 	if Config.TgToken == "" {
@@ -147,20 +150,20 @@ func ConfigGet() error {
 		Config.TgCmdList = TgCmdListDefault
 	}
 
-	perr("DEBUG TgUpdatesOffset <%v>", Config.TgUpdatesOffset)
+	perr(F("DEBUG TgUpdatesOffset <%v>", Config.TgUpdatesOffset))
 
-	perr("DEBUG FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
+	perr(F("DEBUG FeedsCheckInterval <%v>", Config.FeedsCheckInterval))
 	if Config.FeedsCheckInterval == 0 {
 		Config.FeedsCheckInterval = FeedsCheckIntervalDefault
-		perr("FeedsCheckInterval <%v>", Config.FeedsCheckInterval)
+		perr(F("FeedsCheckInterval <%v>", Config.FeedsCheckInterval))
 	}
 
-	perr("DEBUG FeedsCheckLast <%v>", fmttime(Config.FeedsCheckLast))
+	perr(F("DEBUG FeedsCheckLast <%v>", fmttime(Config.FeedsCheckLast)))
 	feedsurls := make([]string, len(Config.Feeds))
 	for i := range Config.Feeds {
 		feedsurls[i] = "[" + Config.Feeds[i].Url + "]"
 	}
-	perr("DEBUG Feeds <%d>( %s )", len(Config.Feeds), strings.Join(feedsurls, SP))
+	perr(F("DEBUG Feeds <%d>( %s )", len(Config.Feeds), strings.Join(feedsurls, SP)))
 
 	return nil
 }
@@ -182,22 +185,22 @@ func TgGetUpdates() error {
 
 		var m tg.Message
 		if u.Message.MessageId != 0 {
-			perr("Update <%d> Message %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u.Message), NL, "<NL>"))
+			perr(F("Update <%d> Message %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u.Message), NL, "<NL>")))
 			m = u.Message
 		} else if u.ChannelPost.MessageId != 0 {
-			perr("Update <%d> ChannelPost %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u.ChannelPost), NL, "<NL>"))
+			perr(F("Update <%d> ChannelPost %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u.ChannelPost), NL, "<NL>")))
 			m = u.ChannelPost
 		} else {
-			perr("Update <%d> %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u), NL, "<NL>"))
+			perr(F("Update <%d> %s", u.UpdateId, strings.ReplaceAll(tg.F("%+v", u), NL, "<NL>")))
 		}
 
 		if m.MessageId == 0 {
-			perr("Update <%d> MessageId <0>", u.UpdateId)
+			perr(F("Update <%d> MessageId <0>", u.UpdateId))
 			continue
 		}
 
 		if tg.F("%d", m.Chat.Id) != Config.TgBossChatId {
-			perr("Update <%d> not from TgBossChatId", u.UpdateId)
+			perr(F("Update <%d> not from TgBossChatId", u.UpdateId))
 			continue
 		}
 
@@ -206,7 +209,7 @@ func TgGetUpdates() error {
 			MessageId: m.MessageId,
 			Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👾"}},
 		}); tgerr != nil {
-			perr("ERROR tg.SetMessageReaction %v", tgerr)
+			perr(F("ERROR tg.SetMessageReaction %v", tgerr))
 		}
 
 		mtff := strings.Fields(m.Text)
@@ -214,11 +217,11 @@ func TgGetUpdates() error {
 		if (len(mtff) == 2 && mtff[0] == Config.TgCmdAdd && strings.HasPrefix(mtff[1], "https://")) || (len(mtff) == 1 && strings.HasPrefix(mtff[0], "https://")) {
 
 			mtfu := mtff[len(mtff)-1]
-			perr("CmdAdd [%s]", mtfu)
+			perr(F("CmdAdd [%s]", mtfu))
 
 			atomfeed, err := FeedGet(Feed{Url: mtfu})
 			if err != nil {
-				perr("CmdAdd FeedGet [%s] %v", mtfu, err)
+				perr(F("CmdAdd FeedGet [%s] %v", mtfu, err))
 				tgmsg := tg.Esc(tg.F("FeedGet %v", err))
 				if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 					ChatId:             fmt.Sprintf("%d", m.Chat.Id),
@@ -226,14 +229,14 @@ func TgGetUpdates() error {
 					Text:               tgmsg,
 					LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},
 				}); tgerr != nil {
-					perr("ERROR tg.SendMessage %v", tgerr)
+					perr(F("ERROR tg.SendMessage %v", tgerr))
 				}
 				continue
 			}
 			if atomfeed != nil && len(atomfeed.Entries) > 0 {
 				err := AtomFeedEntryTgSend(atomfeed, atomfeed.Entries[len(atomfeed.Entries)-1])
 				if err != nil {
-					tglog("AtomFeedEntryTgSend [%s] %v", mtfu, err)
+					tglog(F("AtomFeedEntryTgSend [%s] %v", mtfu, err))
 					continue
 				}
 			}
@@ -253,13 +256,13 @@ func TgGetUpdates() error {
 				MessageId: m.MessageId,
 				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👍"}},
 			}); tgerr != nil {
-				perr("ERROR tg.SetMessageReaction %v", tgerr)
+				perr(F("ERROR tg.SetMessageReaction %v", tgerr))
 			}
 
 		} else if len(mtff) == 2 && mtff[0] == Config.TgCmdRemove && strings.HasPrefix(mtff[1], "https://") {
 
 			mtfu := mtff[len(mtff)-1]
-			perr("CmdRemove [%s]", mtfu)
+			perr(F("CmdRemove [%s]", mtfu))
 
 			FeedsNew := make([]Feed, 0, len(Config.Feeds))
 			for _, f := range Config.Feeds {
@@ -277,7 +280,7 @@ func TgGetUpdates() error {
 				MessageId: m.MessageId,
 				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👍"}},
 			}); tgerr != nil {
-				perr("ERROR tg.SetMessageReaction %v", tgerr)
+				perr(F("ERROR tg.SetMessageReaction %v", tgerr))
 			}
 
 		} else if len(mtff) == 1 && mtff[0] == Config.TgCmdList {
@@ -296,7 +299,7 @@ func TgGetUpdates() error {
 				Text:               tgmsg,
 				LinkPreviewOptions: tg.LinkPreviewOptions{IsDisabled: true},
 			}); tgerr != nil {
-				perr("ERROR tg.SendMessage %v", tgerr)
+				perr(F("ERROR tg.SendMessage %v", tgerr))
 			}
 
 			if tgerr := tg.SetMessageReaction(tg.SetMessageReactionRequest{
@@ -304,7 +307,7 @@ func TgGetUpdates() error {
 				MessageId: m.MessageId,
 				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "👍"}},
 			}); tgerr != nil {
-				perr("ERROR tg.SetMessageReaction %v", tgerr)
+				perr(F("ERROR tg.SetMessageReaction %v", tgerr))
 			}
 
 		} else {
@@ -314,7 +317,7 @@ func TgGetUpdates() error {
 				MessageId: m.MessageId,
 				Reaction:  []tg.ReactionTypeEmoji{tg.ReactionTypeEmoji{Emoji: "🤷‍♂"}},
 			}); tgerr != nil {
-				perr("ERROR tg.SetMessageReaction %v", tgerr)
+				perr(F("ERROR tg.SetMessageReaction %v", tgerr))
 			}
 
 		}
@@ -339,7 +342,7 @@ func init() {
 	}
 
 	if err := ConfigGet(); err != nil {
-		perr("ERROR ConfigGet %v", err)
+		perr(F("ERROR ConfigGet %v", err))
 		os.Exit(1)
 	}
 }
@@ -351,7 +354,7 @@ func main() {
 	signal.Notify(sigterm, syscall.SIGTERM)
 	go func(sigterm chan os.Signal) {
 		<-sigterm
-		tglog("%s sigterm", os.Args[0])
+		tglog(F("%s sigterm", os.Args[0]))
 		os.Exit(1)
 	}(sigterm)
 
@@ -359,14 +362,14 @@ func main() {
 		t0 := time.Now()
 
 		if err = ConfigGet(); err != nil {
-			tglog("ERROR ConfigGet %v", err)
+			tglog(F("ERROR ConfigGet %v", err))
 			os.Exit(1)
 		}
 
 		if err = TgGetUpdates(); err != nil {
-			tglog("ERROR TgGetUpdates %v", err)
+			tglog(F("ERROR TgGetUpdates %v", err))
 		} else if err = FeedsTgSend(); err != nil {
-			tglog("ERROR FeedsTgSend %v", err)
+			tglog(F("ERROR FeedsTgSend %v", err))
 		}
 
 		if dur := time.Now().Sub(t0); dur < Config.Interval {
@@ -421,12 +424,12 @@ func FeedsTgSend() (err error) {
 		}
 		err = FeedEntriesTgSend(Config.Feeds[fi])
 		if err != nil {
-			tglog("FeedEntriesTgSend [%s] %v", Config.Feeds[fi].Url, err)
+			tglog(F("FeedEntriesTgSend [%s] %v", Config.Feeds[fi].Url, err))
 			continue
 		}
 		Config.Feeds[fi].CheckLast = time.Now()
 		if err := Config.Put(); err != nil {
-			tglog("FeedsTgSend [%s] Config.Put %v", Config.Feeds[fi].Url, err)
+			tglog(F("FeedsTgSend [%s] Config.Put %v", Config.Feeds[fi].Url, err))
 			continue
 		}
 	}
@@ -440,7 +443,7 @@ func FeedsTgSend() (err error) {
 }
 
 func FeedGet(f Feed) (atomfeed *AtomFeed, err error) {
-	perr("DEBUG FeedGet url [%s]", f.Url)
+	perr(F("DEBUG FeedGet url [%s]", f.Url))
 
 	resp, err := http.Get(f.Url)
 	if err != nil {
@@ -450,7 +453,7 @@ func FeedGet(f Feed) (atomfeed *AtomFeed, err error) {
 
 	// https://pkg.go.dev/http
 	if resp.StatusCode != http.StatusOK {
-		perr("http response status code <%d>", resp.StatusCode)
+		perr(F("http response status code <%d>", resp.StatusCode))
 		switch resp.StatusCode {
 		case http.StatusInternalServerError, http.StatusBadGateway:
 			return nil, nil
@@ -488,7 +491,7 @@ func AtomFeedEntryTgSend(atomfeed *AtomFeed, atomfeedentry AtomFeedEntry) error 
 		atomfeedentry.Link.Href,
 	)) + NL +
 		tg.Esc(atomfeedentry.Title)
-	perr("DEBUG AtomFeedEntryTgSend tgmsg [%s]", tgmsg)
+	perr(F("DEBUG AtomFeedEntryTgSend tgmsg [%s]", tgmsg))
 
 	if _, tgerr := tg.SendMessage(tg.SendMessageRequest{
 		ChatId:             Config.TgChatId,
@@ -511,7 +514,7 @@ func FeedEntriesTgSend(f Feed) (err error) {
 	}
 
 	for _, atomfeedentry := range atomfeed.Entries {
-		perr("DEBUG FeedEntriesTgSend url [%s] title [%s] updated <%s> link [%s]", f.Url, atomfeedentry.Title, atomfeedentry.Updated.Time, atomfeedentry.Link.Href)
+		perr(F("DEBUG FeedEntriesTgSend url [%s] title [%s] updated <%s> link [%s]", f.Url, atomfeedentry.Title, atomfeedentry.Updated.Time, atomfeedentry.Link.Href))
 
 		if atomfeedentry.Updated.Time.Before(f.CheckLast) {
 			continue
@@ -529,31 +532,32 @@ func FeedEntriesTgSend(f Feed) (err error) {
 }
 
 func fmttime(t time.Time) string {
-	return fmt.Sprintf(
-		"<%03d:%02d%02d:%02d%02d%02dॐ>",
-		t.Year()%1000, t.Month(), t.Day(),
-		t.Hour(), t.Minute(), t.Second(),
+	ts := F(
+		"%d:%02d%02d:%02d%02d",
+		t.Year()%1000, t.Month(), t.Day(), t.Hour(), t.Minute(),
 	)
+	// https://pkg.go.dev/time#Time.Zone
+	if _, tzoffset := t.Zone(); tzoffset == 0 {
+		ts += "+"
+	} else {
+		ts += "-"
+	}
+	return ts
 }
 
-func perr(msg string, args ...interface{}) {
-	if strings.HasPrefix(msg, "DEBUG ") && !Config.DEBUG {
-		return
+func perr(msgtext string) (int, error) {
+	if strings.HasPrefix(msgtext, "DEBUG ") && !Config.DEBUG {
+		return 0, nil
 	}
-	ts := fmttime(time.Now().In(TZIST))
-	msgtext := msg
-	if len(args) > 0 {
-		msgtext = tg.F(msg, args...)
+	tnow := time.Now()
+	if Config.TgToken != "" {
+		msgtext = strings.ReplaceAll(msgtext, Config.TgToken, "[TgToken]")
 	}
-	fmt.Fprint(os.Stderr, ts+SP+msgtext+NL)
+	return fmt.Fprint(os.Stderr, "<"+fmttime(tnow)+">"+SP+msgtext+NL)
 }
 
-func tglog(msg string, args ...interface{}) (err error) {
-	perr(msg, args...)
-	msgtext := msg
-	if len(args) > 0 {
-		msgtext = tg.F(msg, args...)
-	}
+func tglog(msgtext string) (err error) {
+	perr(msgtext)
 	_, err = tg.SendMessage(tg.SendMessageRequest{
 		ChatId: Config.TgBossChatId,
 		Text:   tg.Esc(msgtext),
@@ -587,13 +591,13 @@ func (config *TgFeedConfig) Get() error {
 		return err
 	}
 
-	//perr("DEBUG Config.Get %+v", config)
+	//perr(F("DEBUG Config.Get %+v", config))
 
 	return nil
 }
 
 func (config *TgFeedConfig) Put() error {
-	//perr("DEBUG Config.Put %s %+v", config.YssUrl, config)
+	//perr(F("DEBUG Config.Put %s %+v", config.YssUrl, config))
 
 	rbb, err := yaml.MarshalWithOptions(config, yaml.JSON(), yaml.Flow(false))
 	if err != nil {
